@@ -100,11 +100,14 @@ local function onUpdate(dt)
     end
 
     -- sync often in case we drop requirements somehow
+    -- TODO: break this up across multiple frames
     syncPerks()
 
     -- we have points available. spawn UI.
-    if totalAllowedPoints() > #activePerksByID then
-        pself:sendEvent(settings.MOD_NAME .. "showPerkUI", { active = activePerksByID })
+    local remainingPoints = totalAllowedPoints() - #activePerksByID
+    if remainingPoints > 0 then
+        pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
+            { active = activePerksByID, remainingPoints = remainingPoints })
     end
 end
 

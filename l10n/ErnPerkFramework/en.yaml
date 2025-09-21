@@ -15,3 +15,5 @@ enableLoggingName: "Verbose Logging"
 noRequirement: "<None>"
 hiddenRequirement: "<Requirement Hidden>"
 requirements: "Requirements"
+
+pickButton: "Done"

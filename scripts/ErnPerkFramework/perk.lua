@@ -53,6 +53,10 @@ function PerkFunctions.name(self)
     return name
 end
 
+function PerkFunctions.id(self)
+    return self.record.id
+end
+
 function PerkFunctions.description(self)
     local description = self.record.id .. " description"
     if self.record.localizedDescription == nil then

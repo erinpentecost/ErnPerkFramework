@@ -21,8 +21,9 @@ local pself = require("openmw.self")
 local types = require("openmw.types")
 local log = require("scripts.ErnBurglary.log")
 local settings = require("scripts.ErnPerkFramework.settings")
+local UI = require('openmw.interfaces').UI
 
-local version = 1
+local version = interfaces.ErnPerkFramework.version
 
 -- activePerksByID, in the order they were chosen.
 local activePerksByID = {}
@@ -42,15 +43,20 @@ local function syncPerks()
         local filteredPerks = {}
         for _, perkID in ipairs(activePerksByID) do
             local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
-            if (foundPerk ~= nil) and foundPerk.evaluateRequirements().satisfied then
+            if (foundPerk == nil) then
+                log(nil, "Removing perk " .. perkID .. ", missing.")
+            elseif foundPerk.evaluateRequirements().satisfied then
                 currentPerkNumber = currentPerkNumber + 1
                 if currentPerkNumber > allowedCount then
                     log(nil, "Removing perk " .. perkID .. ", not enough points.")
+                    foundPerk.onRemove()
                 else
+                    log(nil, "Adding perk " .. perkID .. "!")
                     table.insert(filteredPerks, perkID)
                 end
             else
-                log(nil, "Removing perk " .. perkID .. ", invalid or missing.")
+                log(nil, "Removing perk " .. perkID .. ", don't meet requirements.")
+                foundPerk.onRemove()
             end
         end
         activePerksByID = filteredPerks
@@ -59,10 +65,40 @@ local function syncPerks()
             break
         end
     end
+    -- now that we're done removing them, apply them.
+    for _, perkID in ipairs(activePerksByID) do
+        local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
+        foundPerk.onAdd()
+    end
 end
 
 local function onActive()
     syncPerks()
+end
+
+-- Detect when we need to add or remove perks
+local remainingDT = 10
+local function onUpdate(dt)
+    -- don't call this all the time
+    remainingDT = remainingDT - dt
+    if remainingDT > 0 then
+        return
+    end
+    remainingDT = 10
+
+    -- don't do anything if we are in the UI.
+    if UI.getMode() == nil or UI.getMode() == "" then
+        remainingDT = 10
+        return
+    end
+
+    -- sync often in case we drop requirements somehow
+    syncPerks()
+
+    -- we have points available. spawn UI.
+    if totalAllowedPoints() > #activePerksByID then
+        pself:sendEvent(settings.MOD_NAME .. "showPerkUI", {})
+    end
 end
 
 local function onSave()
@@ -77,7 +113,7 @@ local function onLoad(data)
         return
     end
     if (not data) or (not data.version) or (data.version ~= version) then
-        print("Perks resetting. Mod version changed.")
+        log(nil, "Perks resetting. Mod version changed.")
         return
     end
     activePerksByID = data.activePerksByID
@@ -85,6 +121,7 @@ end
 
 return {
     engineHandlers = {
+        onUpdate = onUpdate,
         onActive = onActive,
         onSave = onSave,
         onLoad = onLoad

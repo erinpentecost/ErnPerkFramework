@@ -58,8 +58,8 @@ end
 -- Perks must have these fields:
 -- id, which must be unique.
 -- requirements, which is a list of requirements. These are called on the player context.
--- onAdd, which is the function called when a player adds/picks the perk. This is called on the player context.
--- onRemove, which is the function called when the perk is removed through either respec or invalid requirements. This is called on the player context.
+-- onAdd, which is the function called when a player adds/picks the perk. This is called on the player context. This must be idempotent. This will be called during player Activation.
+-- onRemove, which is the function called when the perk is removed through either respec or invalid requirements. This is called on the player context. This must be idempotent. It is possible that onRemove will be called before onAdd.
 local function registerPerk(data)
     if (not data) or (type(data) ~= "table") then
         error("validateRequirement() argument is not a table.", 2)

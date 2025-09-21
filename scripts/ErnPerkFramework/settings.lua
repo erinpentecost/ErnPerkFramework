@@ -54,7 +54,7 @@ interfaces.Settings.registerGroup {
         {
             key = "enableLogging",
             name = "enableLoggingName",
-            default = false,
+            default = true,
             renderer = "checkbox",
         }
     }

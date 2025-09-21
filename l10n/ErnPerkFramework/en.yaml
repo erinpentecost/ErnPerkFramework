@@ -11,3 +11,7 @@ disableName: "Disable Mod"
 disableDescription: "Disable all perks."
 
 enableLoggingName: "Verbose Logging"
+
+noRequirement: "<None>"
+hiddenRequirement: "<Requirement Hidden>"
+requirements: "Requirements"

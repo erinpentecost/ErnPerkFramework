@@ -27,6 +27,8 @@ local version = interfaces.ErnPerkFramework.version
 
 -- activePerksByID, in the order they were chosen.
 local activePerksByID = {}
+-- map of id -> true to indicate if we're already applied the perk this session.
+local addedByID = {}
 
 local function totalAllowedPoints()
     local level = types.Actor.stats.level(pself).current
@@ -49,6 +51,7 @@ local function syncPerks()
                 currentPerkNumber = currentPerkNumber + 1
                 if currentPerkNumber > allowedCount then
                     log(nil, "Removing perk " .. perkID .. ", not enough points.")
+                    addedByID[perkID] = false
                     foundPerk.onRemove()
                 else
                     log(nil, "Adding perk " .. perkID .. "!")
@@ -56,6 +59,7 @@ local function syncPerks()
                 end
             else
                 log(nil, "Removing perk " .. perkID .. ", don't meet requirements.")
+                addedByID[perkID] = false
                 foundPerk.onRemove()
             end
         end
@@ -67,8 +71,11 @@ local function syncPerks()
     end
     -- now that we're done removing them, apply them.
     for _, perkID in ipairs(activePerksByID) do
-        local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
-        foundPerk.onAdd()
+        if addedByID[perkID] ~= true then
+            local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
+            foundPerk.onAdd()
+            addedByID[perkID] = true
+        end
     end
 end
 
@@ -97,8 +104,23 @@ local function onUpdate(dt)
 
     -- we have points available. spawn UI.
     if totalAllowedPoints() > #activePerksByID then
-        pself:sendEvent(settings.MOD_NAME .. "showPerkUI", {})
+        pself:sendEvent(settings.MOD_NAME .. "showPerkUI", { active = activePerksByID })
     end
+end
+
+local function addPerk(data)
+    if (data == nil) or (not data.perkID) then
+        error("addPerk() called with invalid data.")
+        return
+    end
+    local foundPerk = interfaces.ErnPerkFramework.getPerks()[data.perkID]
+    if foundPerk == nil then
+        error("addPerk(" .. tostring(data.perkID) .. ") called with bad perkID.")
+        return
+    end
+    table.insert(activePerksByID, data.perkID)
+    foundPerk.onAdd()
+    addedByID[data.perkID] = true
 end
 
 local function onSave()
@@ -120,6 +142,9 @@ local function onLoad(data)
 end
 
 return {
+    eventHandlers = {
+        [settings.MOD_NAME .. "addPerk"] = addPerk,
+    },
     engineHandlers = {
         onUpdate = onUpdate,
         onActive = onActive,

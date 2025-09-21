@@ -16,11 +16,17 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 local pself = require("openmw.self")
+local interfaces = require("openmw.interfaces")
 local ui = require('openmw.ui')
 local util = require('openmw.util')
+local settings = require("scripts.ErnPerkFramework.settings")
+local core = require("openmw.core")
+local localization = core.l10n(settings.MOD_NAME)
+local myui = require('scripts.ErnPerkFramework.pcp.myui')
 
 local PerkFunctions = {}
 PerkFunctions.__index = PerkFunctions
+
 
 -- NewPerk makes a new perk from a record
 function NewPerk(data)
@@ -55,27 +61,6 @@ function PerkFunctions.description(self)
     return description
 end
 
-function PerkFunctions.artContent(self)
-    -- These texture dimensions are derived from the Class icon textures.
-    -- That way people that don't want to make art can just supply "archer"
-    -- or whatever and it will fit.
-    local path = "perk_placeholder"
-    if self.record.art ~= nil then
-        path = self.record.art()
-    end
-    return {
-        type = ui.TYPE.Image,
-        alignment = ui.ALIGNMENT.Start,
-        props = {
-            resource = ui.texture {
-                path = path
-            },
-            size = util.vector2(256, 128)
-        },
-        size = util.vector2(256, 128)
-    }
-end
-
 -- returns:
 -- {
 -- requirements={list of requirements info, with fields id, name, satisfied, hidden}
@@ -104,6 +89,134 @@ function PerkFunctions.evaluateRequirements(self)
         requirements = reqs,
         satisfied = allMet,
     }
+end
+
+function PerkFunctions.artLayout(self)
+    -- These texture dimensions are derived from the Class icon textures.
+    -- That way people that don't want to make art can just supply "archer"
+    -- or whatever and it will fit.
+    local path = "perk_placeholder"
+    if self.record.art ~= nil then
+        path = self.record.art()
+    end
+    return {
+        type = ui.TYPE.Image,
+        alignment = ui.ALIGNMENT.Start,
+        props = {
+            resource = ui.texture {
+                path = path
+            },
+            size = util.vector2(256, 128)
+        },
+        size = util.vector2(256, 128)
+    }
+end
+
+function PerkFunctions.requirementsLayout(self)
+    local vFlexLayout = {
+        name = "vflex",
+        type = ui.TYPE.Flex,
+        props = {
+            arrange = ui.ALIGNMENT.Center,
+            horizontal = false,
+        },
+        content = ui.content {},
+    }
+
+    local reqs = self.evaluateRequirements()
+    if #reqs == 0 then
+        local reqLayout = {
+            template = interfaces.MWUI.templates.textNormal,
+            type = ui.TYPE.Text,
+            alignment = ui.ALIGNMENT.End,
+            props = {
+                textAlignH = ui.ALIGNMENT.Start,
+                textAlignV = ui.ALIGNMENT.Center,
+                relativePosition = util.vector2(0, 0.5),
+                text = localization("noRequirement", {}),
+            },
+        }
+        vFlexLayout.content:add(reqLayout)
+    end
+    for i, req in ipairs(reqs.requirements) do
+        local reqLayout = {
+            template = interfaces.MWUI.templates.textNormal,
+            type = ui.TYPE.Text,
+            alignment = ui.ALIGNMENT.End,
+            props = {
+                textAlignH = ui.ALIGNMENT.Start,
+                textAlignV = ui.ALIGNMENT.Center,
+                relativePosition = util.vector2(0, 0.5),
+                text = req.name,
+            },
+        }
+        if not req.satisfied then
+            reqLayout.props.textColor = myui.textColors.negative
+        end
+        if req.hidden then
+            reqLayout.props.text = localization("hiddenRequirement", {})
+        end
+
+        vFlexLayout.content:add(reqLayout)
+    end
+
+    return vFlexLayout
+end
+
+function PerkFunctions.detailLayout(self)
+    local vFlexLayout = {
+        name = "vflex",
+        type = ui.TYPE.Flex,
+        props = {
+            arrange = ui.ALIGNMENT.Center,
+            horizontal = false,
+        },
+        content = ui.content {},
+    }
+
+    local requirementsHeader = {
+        template = interfaces.MWUI.templates.textHeader,
+        type = ui.TYPE.Text,
+        alignment = ui.ALIGNMENT.End,
+        props = {
+            textAlignH = ui.ALIGNMENT.Start,
+            textAlignV = ui.ALIGNMENT.Center,
+            relativePosition = util.vector2(0, 0.5),
+            text = localization("requirements", {}),
+        },
+    }
+
+    local nameHeader = {
+        template = interfaces.MWUI.templates.textHeader,
+        type = ui.TYPE.Text,
+        alignment = ui.ALIGNMENT.End,
+        props = {
+            textAlignH = ui.ALIGNMENT.Start,
+            textAlignV = ui.ALIGNMENT.Center,
+            relativePosition = util.vector2(0, 0.5),
+            text = self.description(),
+        },
+    }
+
+    local detailText = {
+        template = interfaces.MWUI.templates.textHeader,
+        type = ui.TYPE.Text,
+        alignment = ui.ALIGNMENT.End,
+        props = {
+            textAlignH = ui.ALIGNMENT.Start,
+            textAlignV = ui.ALIGNMENT.Center,
+            relativePosition = util.vector2(0, 0.5),
+            text = localization("requirements", {}),
+        },
+    }
+
+    vFlexLayout.content:add(self.artLayout())
+    vFlexLayout.content:add(myui.padWidget(4, 0))
+    vFlexLayout.content:add(requirementsHeader)
+    vFlexLayout.content:add(self.requirementsLayout())
+    vFlexLayout.content:add(myui.padWidget(4, 0))
+    vFlexLayout.content:add(nameHeader)
+    vFlexLayout.content:add(detailText)
 end
 
 return {

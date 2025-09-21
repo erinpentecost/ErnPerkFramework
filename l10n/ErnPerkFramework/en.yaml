@@ -1,0 +1,13 @@
+name: "ErnPerkFramework"
+description: "Learn spells from Spell Books, which may be Corrupted."
+
+modSettingsTitle: "Mod Options"
+modSettingsDesc: "Change how the mod works."
+
+perksPerLevelName: "Perks Per Level"
+perksPerLevelDescription: "How many perks to gain per character level."
+
+disableName: "Disable Mod"
+disableDescription: "Disable all perks."
+
+enableLoggingName: "Verbose Logging"

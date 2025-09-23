@@ -15,9 +15,8 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
+local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
 local perkUtil = require("scripts.ErnPerkFramework.perk")
-local settings = require("scripts.ErnPerkFramework.settings")
-local core = require("openmw.core")
 
 if require("openmw.core").API_REVISION < 62 then
     error("OpenMW 0.49 or newer is required!")
@@ -134,6 +133,7 @@ local function registerPerk(data)
         -- TODO: call onRemove for any player that registered the old one previously?
     else
         -- didn't previously exist
+        print("registerPerk(" .. tostring(data.id) .. ") completed.")
         table.insert(perkIDs, data.id)
     end
 
@@ -149,7 +149,7 @@ local function getPerkIDs()
 end
 
 return {
-    interfaceName = "ErnPerkFramework",
+    interfaceName = MOD_NAME,
     interface = {
         version = 1,
         registerPerk = registerPerk,

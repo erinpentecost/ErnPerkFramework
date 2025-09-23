@@ -15,13 +15,13 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
+local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
 local pself = require("openmw.self")
 local interfaces = require("openmw.interfaces")
 local ui = require('openmw.ui')
 local util = require('openmw.util')
-local settings = require("scripts.ErnPerkFramework.settings")
 local core = require("openmw.core")
-local localization = core.l10n(settings.MOD_NAME)
+local localization = core.l10n(MOD_NAME)
 local myui = require('scripts.ErnPerkFramework.pcp.myui')
 
 local PerkFunctions = {}
@@ -31,6 +31,7 @@ PerkFunctions.__index = PerkFunctions
 -- NewPerk makes a new perk from a record
 function NewPerk(data)
     local new = {
+        added = false,
         record = data
     }
     setmetatable(new, PerkFunctions)
@@ -38,10 +39,18 @@ function NewPerk(data)
 end
 
 function PerkFunctions.onAdd(self)
+    if self.added then
+        return
+    end
+    self.added = true
     return self.record.onAdd()
 end
 
 function PerkFunctions.onRemove(self)
+    if not self.added then
+        return
+    end
+    self.added = false
     return self.record.onRemove()
 end
 
@@ -127,7 +136,7 @@ function PerkFunctions.requirementsLayout(self)
         content = ui.content {},
     }
 
-    local reqs = self.evaluateRequirements()
+    local reqs = self:evaluateRequirements()
     if #reqs == 0 then
         local reqLayout = {
             template = interfaces.MWUI.templates.textNormal,

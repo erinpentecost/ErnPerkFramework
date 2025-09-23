@@ -19,45 +19,69 @@ local interfaces = require("openmw.interfaces")
 local storage = require("openmw.storage")
 local MOD_NAME = "ErnPerkFramework"
 
-interfaces.Settings.registerPage {
-    key = MOD_NAME,
-    l10n = MOD_NAME,
-    name = "name",
-    description = "description"
-}
-interfaces.Settings.registerGroup {
-    key = "Settings" .. MOD_NAME,
-    page = MOD_NAME,
-    l10n = MOD_NAME,
-    name = "settings",
-    permanentStorage = true,
-    settings = {
-        {
-            key = "perksPerLevel",
-            name = "perksPerLevelName",
-            description = "perksPerLevelDescription",
-            default = 1,
-            renderer = "number",
-            argument = {
-                integer = false,
-                min = 0,
-                max = 5,
+local function init()
+    interfaces.Settings.registerPage {
+        key = MOD_NAME,
+        l10n = MOD_NAME,
+        name = "name",
+        description = "description"
+    }
+    interfaces.Settings.registerGroup {
+        key = "Settings" .. MOD_NAME,
+        page = MOD_NAME,
+        l10n = MOD_NAME,
+        name = "settings",
+        permanentStorage = true,
+        settings = {
+            {
+                key = "perksPerLevel",
+                name = "perksPerLevelName",
+                description = "perksPerLevelDescription",
+                default = 1,
+                renderer = "number",
+                argument = {
+                    integer = false,
+                    min = 0,
+                    max = 5,
+                }
+            },
+            {
+                key = "disable",
+                name = "disableName",
+                description = "disableDescription",
+                default = false,
+                renderer = "checkbox",
+            },
+            {
+                key = "enableLogging",
+                name = "enableLoggingName",
+                default = true,
+                renderer = "checkbox",
             }
-        },
-        {
-            key = "disable",
-            name = "disableName",
-            description = "disableDescription",
-            default = false,
-            renderer = "checkbox",
-        },
-        {
-            key = "enableLogging",
-            name = "enableLoggingName",
-            default = true,
-            renderer = "checkbox",
         }
     }
+end
+
+local lookupFuncTable = {
+    __index = function(table, key)
+        if key == "init" then
+            return init
+        elseif key == "MOD_NAME" then
+            return MOD_NAME
+        end
+        -- fall through to settings section
+        local val = table.section:get(key)
+        if val ~= nil then
+            return val
+        else
+            error("unknown setting " .. tostring(key))
+        end
+    end,
 }
 
-return storage.playerSection("Settings" .. MOD_NAME)
+local container = {
+    section = storage.playerSection("Settings" .. MOD_NAME)
+}
+setmetatable(container, lookupFuncTable)
+
+return container

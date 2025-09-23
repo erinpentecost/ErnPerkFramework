@@ -21,11 +21,11 @@ local pself = require("openmw.self")
 local types = require("openmw.types")
 local log = require("scripts.ErnBurglary.log")
 local util = require('openmw.util')
-local settings = require("scripts.ErnPerkFramework.settings")
+local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
 local ui = require('openmw.interfaces').UI
 local myui = require('scripts.ErnPerkFramework.pcp.myui')
 local core = require("openmw.core")
-local localization = core.l10n(settings.MOD_NAME)
+local localization = core.l10n(MOD_NAME)
 
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/widgets/widget.html#properties
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/openmw_ui.html##(Template)

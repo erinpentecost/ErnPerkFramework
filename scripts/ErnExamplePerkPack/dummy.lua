@@ -15,23 +15,26 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
-local settings = require("scripts.ErnPerkFramework.settings")
+local ns = require("scripts.ErnExamplePerkPack.namespace")
+local interfaces = require("openmw.interfaces")
+local ui = require('openmw.ui')
 
-local lastLoggedMessageCategory = nil
-
-local function Log(category, message)
-    if not settings.enableLogging then
-        return
-    end
-    if (category ~= nil) and (lastLoggedMessageCategory == category) then
-        return
-    end
-    if type(message) == "function" then
-        print(message())
-    else
-        print(message)
-    end
-    lastLoggedMessageCategory = category
+-- Test in-game with console command:
+-- lua addperk ErnExamplePerkPack_dummy_1
+for i = 1, 4, 1 do
+    local id = ns .. "_dummy_" .. tostring(i)
+    interfaces.ErnPerkFramework.registerPerk({
+        id = id,
+        requirements = {},
+        onAdd = function()
+            local logLine = id .. " perk added!"
+            ui.showMessage(logLine, {})
+            print(logLine)
+        end,
+        onRemove = function()
+            local logLine = id .. " perk removed!"
+            ui.showMessage(logLine, {})
+            print(logLine)
+        end,
+    })
 end
-
-return Log

@@ -15,23 +15,5 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
-local settings = require("scripts.ErnPerkFramework.settings")
 
-local lastLoggedMessageCategory = nil
-
-local function Log(category, message)
-    if not settings.enableLogging then
-        return
-    end
-    if (category ~= nil) and (lastLoggedMessageCategory == category) then
-        return
-    end
-    if type(message) == "function" then
-        print(message())
-    else
-        print(message)
-    end
-    lastLoggedMessageCategory = category
-end
-
-return Log
+return "ErnExamplePerkPack"

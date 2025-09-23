@@ -19,16 +19,15 @@ local interfaces = require("openmw.interfaces")
 local storage = require('openmw.storage')
 local pself = require("openmw.self")
 local types = require("openmw.types")
-local log = require("scripts.ErnBurglary.log")
+local log = require("scripts.ErnPerkFramework.log")
 local settings = require("scripts.ErnPerkFramework.settings")
 local UI = require('openmw.interfaces').UI
 
+settings.init()
 local version = interfaces.ErnPerkFramework.version
 
 -- activePerksByID, in the order they were chosen.
 local activePerksByID = {}
--- map of id -> true to indicate if we're already applied the perk this session.
-local addedByID = {}
 
 local function totalAllowedPoints()
     local level = types.Actor.stats.level(pself).current
@@ -36,6 +35,7 @@ local function totalAllowedPoints()
 end
 
 local function syncPerks()
+    log("syncPerks", "syncPerks() started.")
     -- keep calling this until the number of perks stops going down.
     -- this handles perks that require other perks to exist.
     local currentCount = #activePerksByID
@@ -46,21 +46,20 @@ local function syncPerks()
         for _, perkID in ipairs(activePerksByID) do
             local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
             if (foundPerk == nil) then
+                -- Maybe don't do this, so late-registering providers aren't deleted.
                 log(nil, "Removing perk " .. perkID .. ", missing.")
-            elseif foundPerk.evaluateRequirements().satisfied then
+            elseif foundPerk:evaluateRequirements().satisfied then
                 currentPerkNumber = currentPerkNumber + 1
                 if currentPerkNumber > allowedCount then
                     log(nil, "Removing perk " .. perkID .. ", not enough points.")
-                    addedByID[perkID] = false
-                    foundPerk.onRemove()
+                    foundPerk:onRemove()
                 else
                     log(nil, "Adding perk " .. perkID .. "!")
                     table.insert(filteredPerks, perkID)
                 end
             else
                 log(nil, "Removing perk " .. perkID .. ", don't meet requirements.")
-                addedByID[perkID] = false
-                foundPerk.onRemove()
+                foundPerk:onRemove()
             end
         end
         activePerksByID = filteredPerks
@@ -71,11 +70,8 @@ local function syncPerks()
     end
     -- now that we're done removing them, apply them.
     for _, perkID in ipairs(activePerksByID) do
-        if addedByID[perkID] ~= true then
-            local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
-            foundPerk.onAdd()
-            addedByID[perkID] = true
-        end
+        local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
+        foundPerk:onAdd()
     end
 end
 
@@ -94,7 +90,7 @@ local function onUpdate(dt)
     remainingDT = 10
 
     -- don't do anything if we are in the UI.
-    if UI.getMode() == nil or UI.getMode() == "" then
+    if UI.getMode() ~= nil and UI.getMode() ~= "" then
         remainingDT = 10
         return
     end
@@ -122,8 +118,7 @@ local function addPerk(data)
         return
     end
     table.insert(activePerksByID, data.perkID)
-    foundPerk.onAdd()
-    addedByID[data.perkID] = true
+    foundPerk:onAdd()
 end
 
 local function onSave()
@@ -144,6 +139,15 @@ local function onLoad(data)
     activePerksByID = data.activePerksByID
 end
 
+local function onConsoleCommand(mode, command, selectedObject)
+    local addCmd = "lua addperk "
+    if string.sub(command:lower(), 1, string.len(addCmd)) == addCmd then
+        pself:sendEvent(settings.MOD_NAME .. "addPerk",
+            { perkID = string.sub(command, string.len(addCmd) + 1) })
+    end
+end
+
+
 return {
     eventHandlers = {
         [settings.MOD_NAME .. "addPerk"] = addPerk,
@@ -152,6 +156,7 @@ return {
         onUpdate = onUpdate,
         onActive = onActive,
         onSave = onSave,
-        onLoad = onLoad
+        onLoad = onLoad,
+        onConsoleCommand = onConsoleCommand,
     }
 }

@@ -140,10 +140,23 @@ local function onLoad(data)
 end
 
 local function onConsoleCommand(mode, command, selectedObject)
-    local addCmd = "lua addperk "
-    if string.sub(command:lower(), 1, string.len(addCmd)) == addCmd then
+    local function getSuffixForCmd(prefix)
+        if string.sub(command:lower(), 1, string.len(prefix)) == prefix then
+            return string.sub(command, string.len(prefix) + 1)
+        else
+            return nil
+        end
+    end
+    local add = getSuffixForCmd("lua addperk ")
+    local show = getSuffixForCmd("lua perks")
+
+    if add ~= nil then
         pself:sendEvent(settings.MOD_NAME .. "addPerk",
-            { perkID = string.sub(command, string.len(addCmd) + 1) })
+            { perkID = add })
+    elseif show ~= nil then
+        local remainingPoints = totalAllowedPoints() - #activePerksByID
+        pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
+            { active = activePerksByID, remainingPoints = remainingPoints })
     end
 end
 

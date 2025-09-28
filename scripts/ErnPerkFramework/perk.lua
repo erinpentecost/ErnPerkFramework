@@ -56,7 +56,7 @@ end
 
 function PerkFunctions.name(self)
     local name = self.record.id
-    if self.record.localizedName == nil then
+    if self.record.localizedName ~= nil then
         name = self.record.localizedName()
     end
     return name
@@ -68,7 +68,7 @@ end
 
 function PerkFunctions.description(self)
     local description = self.record.id .. " description"
-    if self.record.localizedDescription == nil then
+    if self.record.localizedDescription ~= nil then
         description = self.record.localizedDescription()
     end
     return description
@@ -88,7 +88,7 @@ function PerkFunctions.evaluateRequirements(self)
             allMet = false
         end
         local name = r.id
-        if r.localizedName == nil then
+        if r.localizedName ~= nil then
             name = r.localizedName()
         end
 
@@ -108,7 +108,7 @@ function PerkFunctions.artLayout(self)
     -- These texture dimensions are derived from the Class icon textures.
     -- That way people that don't want to make art can just supply "archer"
     -- or whatever and it will fit.
-    local path = "perk_placeholder"
+    local path = "textures\\perk_placeholder.dds"
     if self.record.art ~= nil then
         path = self.record.art()
     end
@@ -139,7 +139,7 @@ function PerkFunctions.requirementsLayout(self)
     local reqs = self:evaluateRequirements()
     if #reqs == 0 then
         local reqLayout = {
-            template = interfaces.MWUI.templates.textNormal,
+            template = interfaces.MWUI.templates.textParagraph,
             type = ui.TYPE.Text,
             alignment = ui.ALIGNMENT.End,
             props = {
@@ -153,7 +153,7 @@ function PerkFunctions.requirementsLayout(self)
     end
     for i, req in ipairs(reqs.requirements) do
         local reqLayout = {
-            template = interfaces.MWUI.templates.textNormal,
+            template = interfaces.MWUI.templates.textParagraph,
             type = ui.TYPE.Text,
             alignment = ui.ALIGNMENT.End,
             props = {
@@ -207,29 +207,31 @@ function PerkFunctions.detailLayout(self)
             textAlignH = ui.ALIGNMENT.Start,
             textAlignV = ui.ALIGNMENT.Center,
             relativePosition = util.vector2(0, 0.5),
-            text = self.description(),
+            text = self:name(),
         },
     }
 
     local detailText = {
-        template = interfaces.MWUI.templates.textHeader,
+        template = interfaces.MWUI.templates.textParagraph,
         type = ui.TYPE.Text,
         alignment = ui.ALIGNMENT.End,
         props = {
             textAlignH = ui.ALIGNMENT.Start,
             textAlignV = ui.ALIGNMENT.Center,
             relativePosition = util.vector2(0, 0.5),
-            text = localization("requirements", {}),
+            text = self:description(),
         },
     }
 
-    vFlexLayout.content:add(self.artLayout())
+    vFlexLayout.content:add(self:artLayout())
     vFlexLayout.content:add(myui.padWidget(4, 0))
     vFlexLayout.content:add(requirementsHeader)
-    vFlexLayout.content:add(self.requirementsLayout())
+    vFlexLayout.content:add(self:requirementsLayout())
     vFlexLayout.content:add(myui.padWidget(4, 0))
     vFlexLayout.content:add(nameHeader)
     vFlexLayout.content:add(detailText)
+
+    return vFlexLayout
 end
 
 return {

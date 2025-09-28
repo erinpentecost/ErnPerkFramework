@@ -121,6 +121,25 @@ local function addPerk(data)
     foundPerk:onAdd()
 end
 
+local function removePerk(data)
+    if (data == nil) or (not data.perkID) then
+        error("removePerk() called with invalid data.")
+        return
+    end
+    local foundPerk = interfaces.ErnPerkFramework.getPerks()[data.perkID]
+    if foundPerk == nil then
+        error("removePerk(" .. tostring(data.perkID) .. ") called with bad perkID.")
+        return
+    end
+    for i, p in ipairs(activePerksByID) do
+        if p == data.perkID then
+            table.remove(activePerksByID, i)
+            break
+        end
+    end
+    foundPerk:onRemove()
+end
+
 local function onSave()
     return {
         version = version,
@@ -164,6 +183,7 @@ end
 return {
     eventHandlers = {
         [settings.MOD_NAME .. "addPerk"] = addPerk,
+        [settings.MOD_NAME .. "removePerk"] = removePerk,
     },
     engineHandlers = {
         onUpdate = onUpdate,

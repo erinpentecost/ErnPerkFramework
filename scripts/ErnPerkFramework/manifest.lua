@@ -130,7 +130,9 @@ local function registerPerk(data)
     -- we want to allow this so perk mods can patch eachother.
     if perkTable[data.id] ~= nil then
         print("registerPerk(" .. tostring(data.id) .. ") is replacing an existing perk.")
-        -- TODO: call onRemove for any player that registered the old one previously?
+        -- Call onRemove for any player that registered the old one previously?
+        -- Gets messy because the ID of the removed perk is unavailable once we leave this
+        -- function.
     else
         -- didn't previously exist
         print("registerPerk(" .. tostring(data.id) .. ") completed.")

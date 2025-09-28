@@ -32,8 +32,11 @@ local localization = core.l10n(MOD_NAME)
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/openmw_ui.html##(Template)
 
 local menu = nil
-local perkDetail = ui.content {}
-local perkList = ui.content {
+local perkDetail = ui.create {
+    name = 'perkDetail',
+    type = ui.TYPE.Flex,
+}
+local perkList = {
     -- list o' perks
     name = 'perkList',
     type = ui.TYPE.Flex,
@@ -51,11 +54,15 @@ local selectedPerkIndex = 1
 
 
 local function pickPerk()
+    log(nil, "pickPerk() started")
     if selectedPerkID ~= nil then
         log(nil, "Picked perk " .. selectedPerkID)
         -- TODO: also close the window
-        pself:sendEvent(settings.MOD_NAME .. "addPerk",
+        pself:sendEvent(MOD_NAME .. "addPerk",
             { perkID = selectedPerkID })
+    end
+    if menu ~= nil then
+        menu:destroy()
     end
 end
 
@@ -65,14 +72,17 @@ pickButton.layout = myui.createTextButton(pickButton, localization('pickButton')
     pickPerk)
 
 local function viewPerk(perkID)
-    local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
+    local foundPerk = perkID
+    if type(perkID) == "string" then
+        foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
+    end
     if foundPerk == nil then
-        error("bad perk: " .. foundPerk)
+        error("bad perk: " .. tostring(perkID))
         return
     end
 
     selectedPerkID = perkID
-    perkDetail.layout = foundPerk.detailLayout()
+    perkDetail.layout = foundPerk:detailLayout()
     perkDetail:update()
 end
 
@@ -127,21 +137,32 @@ end
 
 
 local function perkListLayout()
-
+    local allPerkIDs = interfaces.ErnPerkFramework.getPerkIDs()
+    -- uh
+    viewPerk(interfaces.ErnPerkFramework.getPerks()[allPerkIDs[1]])
 end
 
 local function showPerkUI(data)
-    log(nil, "Showing Perk UI...")
-    activePerks = data.active
-    remainingPoints = data.remainingPoints
-    selectedPerkID = nil
+    local allPerkIDs = interfaces.ErnPerkFramework.getPerkIDs()
+    if #allPerkIDs == 0 then
+        log(nil, "No perks found.")
+        return
+    end
+    if menu == nil then
+        log(nil, "Showing Perk UI...")
+        activePerks = data.active
+        remainingPoints = data.remainingPoints
+        selectedPerkID = nil
 
-    menu = ui.create(menuLayout)
+        perkListLayout()
+
+        menu = ui.create(menuLayout)
+    end
 end
 
 
 return {
     eventHandlers = {
-        [settings.MOD_NAME .. "showPerkUI"] = showPerkUI,
+        [MOD_NAME .. "showPerkUI"] = showPerkUI,
     }
 }

@@ -17,3 +17,6 @@ hiddenRequirement: "<Requirement Hidden>"
 requirements: "Requirements"
 
 pickButton: "Done"
+
+# built-in requirements
+req_minimumLevel: "Level {level}"

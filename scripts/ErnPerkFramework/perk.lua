@@ -57,7 +57,11 @@ end
 function PerkFunctions.name(self)
     local name = self.record.id
     if self.record.localizedName ~= nil then
-        name = self.record.localizedName()
+        if type(self.record.localizedName) == 'function' then
+            name = self.record.localizedName()
+        else
+            name = self.record.localizedName
+        end
     end
     return name
 end
@@ -69,7 +73,11 @@ end
 function PerkFunctions.description(self)
     local description = self.record.id .. " description"
     if self.record.localizedDescription ~= nil then
-        description = self.record.localizedDescription()
+        if type(self.record.localizedDescription) == 'function' then
+            description = self.record.localizedDescription()
+        else
+            description = self.record.localizedDescription
+        end
     end
     return description
 end
@@ -89,10 +97,18 @@ function PerkFunctions.evaluateRequirements(self)
         end
         local name = r.id
         if r.localizedName ~= nil then
-            name = r.localizedName()
+            if type(r.localizedName) == 'function' then
+                name = r.localizedName()
+            else
+                name = r.localizedName
+            end
+        end
+        local hide = r.hidden
+        if type(r.hidden) == 'function' then
+            hide = r.hidden()
         end
 
-        table.insert(reqs, { id = r.id, name = name, satisfied = satisfied, hidden = (r.hidden and (not satisfied)) })
+        table.insert(reqs, { id = r.id, name = name, satisfied = satisfied, hidden = (hide and (not satisfied)) })
     end
 
     -- sort reqs by name
@@ -166,7 +182,12 @@ function PerkFunctions.requirementsLayout(self)
         if not req.satisfied then
             reqLayout.props.textColor = myui.textColors.negative
         end
-        if req.hidden then
+
+        local hide = req.hidden
+        if type(req.hidden) == 'function' then
+            hide = req.hidden()
+        end
+        if hide then
             reqLayout.props.text = localization("hiddenRequirement", {})
         end
 

@@ -44,9 +44,9 @@ local function validateRequirement(requirement)
         return false
     end
     if (requirement.localizedName ~= nil) then
-        if (type(requirement.localizedName) ~= "function") then
+        if (type(requirement.localizedName) ~= "function") and (type(requirement.localizedName) ~= "string") then
             error(
-                "validateRequirement() requirement data has a 'localizedName' field, which must be a function that returns a string.",
+                "validateRequirement() requirement data has a 'localizedName' field, which must be a string or a function that returns a string.",
                 3)
             return false
         end
@@ -81,39 +81,40 @@ local function registerPerk(data)
         return false
     end
     if (data.localizedName ~= nil) then
-        if (type(data.localizedName) ~= "function") then
+        if (type(data.localizedName) ~= "function") and (type(data.localizedName) ~= "string") then
             error(
                 "registerPerk(" ..
                 tostring(data.id) ..
-                ") perk data has a 'localizedName' field, which must be a function that returns a string.", 2)
+                ") perk data has a 'localizedName' field, which must be a string or a function that returns a string.", 2)
             return false
         end
     end
     if (data.localizedDescription ~= nil) then
-        if (type(data.localizedDescription) ~= "function") then
+        if (type(data.localizedDescription) ~= "function") and (type(data.localizedDescription) ~= "string") then
             error(
                 "registerPerk(" ..
                 tostring(data.id) ..
-                ") perk data has a 'localizedDescription' field, which must be a function that returns a string.", 2)
+                ") perk data has a 'localizedDescription' field, which must be a string or a function that returns a string.",
+                2)
             return false
         end
     end
     if (data.art ~= nil) then
-        if (type(data.art) ~= "function") then
+        if (type(data.art) ~= "function") and (type(data.art) ~= "string") then
             error(
                 "registerPerk(" ..
                 tostring(data.id) ..
-                ") perk data has an 'art' field, which must be a function that returns a texture path.",
+                ") perk data has an 'art' field, which must be a string or a function that returns a texture path.",
                 2)
             return false
         end
     end
     if (data.hidden ~= nil) then
-        if (type(data.hidden) ~= "boolean") then
+        if (type(data.hidden) ~= "function") and (type(data.hidden) ~= "boolean") then
             error(
                 "registerPerk(" ..
                 tostring(data.id) ..
-                ") perk data has a 'hidden' field, which must be a function that returns a boolean.",
+                ") perk data has a 'hidden' field, which must be a boolean or a functino that returns a boolean.",
                 2)
             return false
         end
@@ -150,6 +151,10 @@ local function getPerkIDs()
     return perkIDs
 end
 
+local function requirements()
+    return require("scripts.ErnPerkFramework.requirements")
+end
+
 return {
     interfaceName = MOD_NAME,
     interface = {
@@ -157,5 +162,6 @@ return {
         registerPerk = registerPerk,
         getPerks = getPerks,
         getPerkIDs = getPerkIDs,
+        requirements = requirements,
     }
 }

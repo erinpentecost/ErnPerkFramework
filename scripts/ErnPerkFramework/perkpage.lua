@@ -159,11 +159,17 @@ end
 
 local function perkNameElement(perkObj, idx)
     -- this is the perk name as it appears in the selection list.
+    local met = perkObj:evaluateRequirements().satisfied
+    local color = 'normal'
+    if met == false then
+        color = 'disabled'
+    end
+
     local selectButton = ui.create {}
     selectButton.layout = myui.createTextButton(
         selectButton,
         perkObj:name(),
-        'normal',
+        color,
         'selectButton_' .. perkObj:id(),
         {},
         util.vector2(129, 17),

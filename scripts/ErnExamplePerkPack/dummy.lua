@@ -25,7 +25,9 @@ for i = 1, 4, 1 do
     local id = ns .. "_dummy_" .. tostring(i)
     interfaces.ErnPerkFramework.registerPerk({
         id = id,
-        requirements = {},
+        requirements = {
+            interfaces.ErnPerkFramework.requirements().minimumLevel(i * i),
+        },
         onAdd = function()
             local logLine = id .. " perk added!"
             ui.showMessage(logLine, {})

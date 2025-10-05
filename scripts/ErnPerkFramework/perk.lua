@@ -140,7 +140,7 @@ function PerkFunctions.requirementsLayout(self)
     if #reqs == 0 then
         local reqLayout = {
             template = interfaces.MWUI.templates.textParagraph,
-            type = ui.TYPE.Text,
+            --type = ui.TYPE.Text,
             alignment = ui.ALIGNMENT.End,
             props = {
                 textAlignH = ui.ALIGNMENT.Start,
@@ -154,7 +154,7 @@ function PerkFunctions.requirementsLayout(self)
     for i, req in ipairs(reqs.requirements) do
         local reqLayout = {
             template = interfaces.MWUI.templates.textParagraph,
-            type = ui.TYPE.Text,
+            --type = ui.TYPE.Text,
             alignment = ui.ALIGNMENT.End,
             props = {
                 textAlignH = ui.ALIGNMENT.Start,
@@ -178,7 +178,7 @@ end
 
 function PerkFunctions.detailLayout(self)
     local vFlexLayout = {
-        name = "vflex",
+        name = "detailLayout",
         type = ui.TYPE.Flex,
         props = {
             arrange = ui.ALIGNMENT.Center,
@@ -213,7 +213,7 @@ function PerkFunctions.detailLayout(self)
 
     local detailText = {
         template = interfaces.MWUI.templates.textParagraph,
-        type = ui.TYPE.Text,
+        --type = ui.TYPE.Text,
         alignment = ui.ALIGNMENT.End,
         props = {
             textAlignH = ui.ALIGNMENT.Start,

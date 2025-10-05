@@ -92,7 +92,7 @@ pickButtonElement.layout = myui.createTextButton(
     pickPerk)
 pickButtonElement:update()
 
-local function viewPerk(perkID)
+local function viewPerk(perkID, idx)
     local foundPerk = perkID
     if type(perkID) == "string" then
         foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
@@ -101,6 +101,7 @@ local function viewPerk(perkID)
         error("bad perk: " .. tostring(perkID))
         return
     end
+    selectedPerkIndex = idx
 
     log(nil, "Showing detail for perk " .. foundPerk:name())
     perkDetailElement.layout = foundPerk:detailLayout()
@@ -156,14 +157,18 @@ local function menuLayout()
     }
 end
 
-local function perkNameElement(perkObj)
+local function perkNameElement(perkObj, idx)
     -- this is the perk name as it appears in the selection list.
     local selectButton = ui.create {}
-    selectButton.layout = myui.createTextButton(selectButton, perkObj:name(), 'normal', 'selectButton_' .. perkObj:id(),
+    selectButton.layout = myui.createTextButton(
+        selectButton,
+        perkObj:name(),
+        'normal',
+        'selectButton_' .. perkObj:id(),
         {},
         util.vector2(129, 17),
         viewPerk,
-        perkObj:id())
+        { perkObj:id(), idx })
     selectButton:update()
     return selectButton
 end
@@ -174,9 +179,9 @@ local function drawPerkList()
         old:destroy()
     end
     perkListElement.layout.content = ui.content {}
-    for _, perkID in ipairs(perkIDs) do
+    for idx, perkID in ipairs(perkIDs) do
         log(nil, "Making button for " .. tostring(perkID))
-        local newName = perkNameElement(interfaces.ErnPerkFramework.getPerks()[perkID])
+        local newName = perkNameElement(interfaces.ErnPerkFramework.getPerks()[perkID], idx)
         table.insert(perkListElement.layout.content, newName)
     end
     perkListElement:update()
@@ -214,5 +219,8 @@ end
 return {
     eventHandlers = {
         [MOD_NAME .. "showPerkUI"] = showPerkUI,
+    },
+    engineHandlers = {
+        onFrame = myui.processButtonAction,
     }
 }

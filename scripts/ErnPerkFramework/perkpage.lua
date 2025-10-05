@@ -28,6 +28,11 @@ local myui = require('scripts.ErnPerkFramework.pcp.myui')
 local core = require("openmw.core")
 local localization = core.l10n(MOD_NAME)
 
+-- A content list can contain both Elements and Layouts.
+-- Elements are what you get when you call ui.create().
+-- Elements are passed by reference, so you can update them without needing to
+-- mess with parent layouts that use them.
+--
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/widgets/widget.html#properties
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/openmw_ui.html##(Template)
 
@@ -43,6 +48,7 @@ local perkListElement = ui.create {
     props = {
         horizontal = false,
     },
+    content = ui.content {}
 }
 
 local activePerks = {}
@@ -55,6 +61,13 @@ local function getSelectedPerk()
     return interfaces.ErnPerkFramework.getPerks()[selectedPerkID]
 end
 
+local function closeUI()
+    --interfaces.UI.setMode()
+    if menu ~= nil then
+        menu:destroy()
+    end
+end
+
 
 local function pickPerk()
     log(nil, "pickPerk() started")
@@ -65,16 +78,19 @@ local function pickPerk()
         pself:sendEvent(MOD_NAME .. "addPerk",
             { perkID = selectedPerk:id() })
     end
-    if menu ~= nil then
-        menu:destroy()
-    end
+    closeUI()
 end
 
 local pickButtonElement = ui.create {}
-pickButtonElement.layout = myui.createTextButton(pickButtonElement, localization('pickButton'), 'normal', 'autoButton',
+pickButtonElement.layout = myui.createTextButton(
+    pickButtonElement,
+    localization('pickButton'),
+    'normal',
+    'pickButton',
     {},
     util.vector2(129, 17),
     pickPerk)
+pickButtonElement:update()
 
 local function viewPerk(perkID)
     local foundPerk = perkID
@@ -100,8 +116,6 @@ local function menuLayout()
         props = {
             anchor = util.vector2(0.5, 0.5),
             relativePosition = util.vector2(0.5, 0.5),
-            --size = ui.screenSize() * 0.75,
-            --autoSize = false,
         },
         content = ui.content {
             {
@@ -112,13 +126,12 @@ local function menuLayout()
                     {
                         name = 'mainFlex',
                         type = ui.TYPE.Flex,
-                        props = { horizontal = true },
+                        props = {
+                            horizontal = true,
+                            autoSize = false,
+                            size = ui.screenSize() * 0.75,
+                        },
                         content = ui.content {
-                            {
-                                type = ui.TYPE.Text,
-                                template = interfaces.MWUI.templates.textNormal,
-                                props = { text = "debug-mainFlex" }
-                            },
                             perkListElement,
                             {
                                 template = interfaces.MWUI.verticalLineThick,
@@ -127,13 +140,10 @@ local function menuLayout()
                                 -- detail page
                                 name = 'interactiveFlex',
                                 type = ui.TYPE.Flex,
-                                props = { arrange = ui.ALIGNMENT.End },
+                                props = {
+                                    arrange = ui.ALIGNMENT.End,
+                                },
                                 content = ui.content {
-                                    {
-                                        type = ui.TYPE.Text,
-                                        template = interfaces.MWUI.templates.textNormal,
-                                        props = { text = "debug-interactiveFlex" }
-                                    },
                                     perkDetailElement,
                                     pickButtonElement
                                 }
@@ -146,19 +156,34 @@ local function menuLayout()
     }
 end
 
-local function perkNameLayout(perkObj)
+local function perkNameElement(perkObj)
     -- this is the perk name as it appears in the selection list.
     local selectButton = ui.create {}
-    selectButton.layout = myui.createTextButton(selectButton, perkObj.name(), 'normal', 'selectButton', {},
+    selectButton.layout = myui.createTextButton(selectButton, perkObj:name(), 'normal', 'selectButton_' .. perkObj:id(),
+        {},
         util.vector2(129, 17),
-        function()
-            viewPerk(perkObj.id())
-        end)
+        viewPerk,
+        perkObj:id())
+    selectButton:update()
     return selectButton
 end
 
+local function drawPerkList()
+    local perkIDs = interfaces.ErnPerkFramework.getPerkIDs()
+    for _, old in ipairs(perkListElement.layout.content) do
+        old:destroy()
+    end
+    perkListElement.layout.content = ui.content {}
+    for _, perkID in ipairs(perkIDs) do
+        log(nil, "Making button for " .. tostring(perkID))
+        local newName = perkNameElement(interfaces.ErnPerkFramework.getPerks()[perkID])
+        table.insert(perkListElement.layout.content, newName)
+    end
+    perkListElement:update()
+end
 
 local function redraw()
+    drawPerkList()
     viewPerk(getSelectedPerk())
 
     if menu ~= nil then
@@ -173,6 +198,7 @@ local function showPerkUI(data)
         return
     end
     if menu == nil then
+        interfaces.UI.setMode('Interface', { windows = {} })
         log(nil, "Showing Perk UI...")
         activePerks = data.active
         remainingPoints = data.remainingPoints

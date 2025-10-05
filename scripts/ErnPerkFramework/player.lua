@@ -98,13 +98,6 @@ local function onUpdate(dt)
     -- sync often in case we drop requirements somehow
     -- TODO: break this up across multiple frames
     syncPerks()
-
-    -- we have points available. spawn UI.
-    local remainingPoints = totalAllowedPoints() - #activePerksByID
-    if remainingPoints > 0 then
-        pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-            { active = activePerksByID, remainingPoints = remainingPoints })
-    end
 end
 
 local function addPerk(data)
@@ -179,9 +172,20 @@ local function onConsoleCommand(mode, command, selectedObject)
     end
 end
 
+local function UiModeChanged(data)
+    -- spawn perk UI after the levelup UI.
+    if (data.newMode == nil) and (data.oldMode == 'LevelUp') then
+        local remainingPoints = totalAllowedPoints() - #activePerksByID
+        if remainingPoints > 0 then
+            pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
+                { active = activePerksByID, remainingPoints = remainingPoints })
+        end
+    end
+end
 
 return {
     eventHandlers = {
+        UiModeChanged = UiModeChanged,
         [settings.MOD_NAME .. "addPerk"] = addPerk,
         [settings.MOD_NAME .. "removePerk"] = removePerk,
     },

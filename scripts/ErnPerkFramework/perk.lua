@@ -153,7 +153,7 @@ function PerkFunctions.requirementsLayout(self)
     }
 
     local reqs = self:evaluateRequirements()
-    if #reqs == 0 then
+    if #reqs.requirements == 0 then
         local reqLayout = {
             template = interfaces.MWUI.templates.textParagraph,
             --type = ui.TYPE.Text,
@@ -245,10 +245,10 @@ function PerkFunctions.detailLayout(self)
     }
 
     vFlexLayout.content:add(self:artLayout())
-    vFlexLayout.content:add(myui.padWidget(4, 0))
+    vFlexLayout.content:add(myui.padWidget(0, 4))
     vFlexLayout.content:add(requirementsHeader)
     vFlexLayout.content:add(self:requirementsLayout())
-    vFlexLayout.content:add(myui.padWidget(4, 0))
+    vFlexLayout.content:add(myui.padWidget(0, 4))
     vFlexLayout.content:add(nameHeader)
     vFlexLayout.content:add(detailText)
 

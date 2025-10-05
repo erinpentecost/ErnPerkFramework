@@ -62,23 +62,38 @@ local function getSelectedPerk()
 end
 
 local function closeUI()
-    --interfaces.UI.setMode()
     if menu ~= nil then
+        log(nil, "closing ui")
         menu:destroy()
+        menu = nil
+        -- need to destroy everything before leaving the mode,
+        -- or orphaned button callbacks will invoke focusLost() and
+        -- crash the script.
+        for _, elem in ipairs(perkListElement.layout.content) do
+            elem:destroy()
+        end
+        perkDetailElement:destroy()
+        perkDetailElement = ui.create {
+            name = "detailLayout",
+            type = ui.TYPE.Flex,
+        }
+        interfaces.UI.removeMode('Interface')
     end
 end
 
 
 local function pickPerk()
-    log(nil, "pickPerk() started")
     local selectedPerk = getSelectedPerk()
     if selectedPerk ~= nil then
         log(nil, "Picked perk " .. selectedPerk:id())
-        -- TODO: also close the window
-        pself:sendEvent(MOD_NAME .. "addPerk",
-            { perkID = selectedPerk:id() })
+        local met = selectedPerk:evaluateRequirements().satisfied
+        if met == true then
+            closeUI()
+            log(nil, "Adding perk " .. selectedPerk:id())
+            pself:sendEvent(MOD_NAME .. "addPerk",
+                { perkID = selectedPerk:id() })
+        end
     end
-    closeUI()
 end
 
 local pickButtonElement = ui.create {}
@@ -91,6 +106,17 @@ pickButtonElement.layout = myui.createTextButton(
     util.vector2(129, 17),
     pickPerk)
 pickButtonElement:update()
+
+local cancelButtonElement = ui.create {}
+cancelButtonElement.layout = myui.createTextButton(
+    cancelButtonElement,
+    localization('cancelButton'),
+    'normal',
+    'cancelButton',
+    {},
+    util.vector2(129, 17),
+    closeUI)
+cancelButtonElement:update()
 
 local function viewPerk(perkID, idx)
     local foundPerk = perkID
@@ -146,7 +172,20 @@ local function menuLayout()
                                 },
                                 content = ui.content {
                                     perkDetailElement,
-                                    pickButtonElement
+                                    myui.padWidget(0, 8),
+                                    {
+                                        name = 'footer',
+                                        type = ui.TYPE.Flex,
+                                        props = {
+                                            horizontal = true,
+                                        },
+                                        content = ui.content {
+                                            pickButtonElement,
+                                            myui.padWidget(8, 0),
+                                            cancelButtonElement
+                                        },
+                                    },
+
                                 }
                             }
                         }
@@ -221,10 +260,10 @@ local function showPerkUI(data)
     end
 end
 
-
 return {
     eventHandlers = {
         [MOD_NAME .. "showPerkUI"] = showPerkUI,
+        [MOD_NAME .. "closePerkUI"] = closeUI,
     },
     engineHandlers = {
         onFrame = myui.processButtonAction,

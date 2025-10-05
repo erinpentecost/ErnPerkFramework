@@ -16,7 +16,8 @@ noRequirement: "<None>"
 hiddenRequirement: "<Requirement Hidden>"
 requirements: "Requirements"
 
-pickButton: "Done"
+cancelButton: "Cancel"
+pickButton: "Select Perk"
 
 # built-in requirements
 req_minimumLevel: "Level {level}"

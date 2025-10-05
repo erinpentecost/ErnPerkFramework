@@ -180,6 +180,8 @@ local function UiModeChanged(data)
             pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
                 { active = activePerksByID, remainingPoints = remainingPoints })
         end
+    elseif (data.newMode == nil) then
+        pself:sendEvent(settings.MOD_NAME .. "closePerkUI", {})
     end
 end
 

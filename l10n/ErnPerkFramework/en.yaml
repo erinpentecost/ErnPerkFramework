@@ -20,3 +20,5 @@ pickButton: "Done"
 
 # built-in requirements
 req_minimumLevel: "Level {level}"
+req_minimumSkillLevel: "{skill} {level}"
+req_minimumAttributeLevel: "{attribute} {level}"

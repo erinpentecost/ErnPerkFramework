@@ -36,8 +36,31 @@ local function minimumLevel(level)
     }
 end
 
+local function minimumSkillLevel(skillID, level)
+    local skillRecord = core.stats.Skill.records[skillID]
+    return {
+        id = builtin .. 'minimumSkillLevel',
+        localizedName = localization('req_minimumSkillLevel', { skill = skillRecord.name, level = level }),
+        check = function()
+            return types.NPC.stats.skills[skillID](pself).base >= level
+        end
+    }
+end
+
+local function minimumAttributeLevel(attributeID, level)
+    local attributeRecord = core.stats.Attribute.records[attributeID]
+    return {
+        id = builtin .. 'minimumAttributeLevel',
+        localizedName = localization('req_minimumAttributeLevel', { attribute = attributeRecord.name, level = level }),
+        check = function()
+            return types.Actor.stats.attributes[attributeID](pself).base >= level
+        end
+    }
+end
 
 
 return {
     minimumLevel = minimumLevel,
+    minimumSkillLevel = minimumSkillLevel,
+    minimumAttributeLevel = minimumAttributeLevel,
 }

@@ -23,11 +23,20 @@ local ui = require('openmw.ui')
 -- lua addperk ErnExamplePerkPack_dummy_1
 for i = 1, 4, 1 do
     local id = ns .. "_dummy_" .. tostring(i)
+    local requirements = {
+        interfaces.ErnPerkFramework.requirements().minimumLevel(i * i),
+    }
+    if i == 2 then
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().
+        minimumSkillLevel('sneak', 40))
+    elseif i == 3 then
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().
+        minimumAttributeLevel('strength', 50))
+    end
+
     interfaces.ErnPerkFramework.registerPerk({
         id = id,
-        requirements = {
-            interfaces.ErnPerkFramework.requirements().minimumLevel(i * i),
-        },
+        requirements = requirements,
         onAdd = function()
             local logLine = id .. " perk added!"
             ui.showMessage(logLine, {})

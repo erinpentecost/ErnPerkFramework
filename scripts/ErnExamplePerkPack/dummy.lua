@@ -37,6 +37,7 @@ for i = 1, 4, 1 do
     interfaces.ErnPerkFramework.registerPerk({
         id = id,
         requirements = requirements,
+        localizedDescription = "perk description " .. tostring(i),
         onAdd = function()
             local logLine = id .. " perk added!"
             ui.showMessage(logLine, {})
@@ -49,3 +50,39 @@ for i = 1, 4, 1 do
         end,
     })
 end
+
+-- perks with nonstandard costs
+interfaces.ErnPerkFramework.registerPerk({
+    id = ns .. "_dummy_" .. "penalty",
+    requirements = {},
+    localizedName = "Negative Cost",
+    cost = -1,
+    localizedDescription = "This perk has a negative cost, so it could be used as a handicap.",
+    onAdd = function()
+        local logLine = "Negative Cost perk added!"
+        ui.showMessage(logLine, {})
+        print(logLine)
+    end,
+    onRemove = function()
+        local logLine = "Negative Cost perk added!"
+        ui.showMessage(logLine, {})
+        print(logLine)
+    end,
+})
+interfaces.ErnPerkFramework.registerPerk({
+    id = ns .. "_dummy_" .. "expensive",
+    requirements = {},
+    localizedName = "Expensive Cost",
+    cost = 2,
+    localizedDescription = "This perk costs extra points, so it could be extra powerful.",
+    onAdd = function()
+        local logLine = "Expensive Cost perk added!"
+        ui.showMessage(logLine, {})
+        print(logLine)
+    end,
+    onRemove = function()
+        local logLine = "Expensive Cost perk added!"
+        ui.showMessage(logLine, {})
+        print(logLine)
+    end,
+})

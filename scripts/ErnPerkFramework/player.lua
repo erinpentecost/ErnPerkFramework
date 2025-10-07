@@ -34,6 +34,14 @@ local function totalAllowedPoints()
     return math.floor(settings.perksPerLevel * level)
 end
 
+local function currentSpentPoints()
+    local total = 0
+    for _, foundID in ipairs(activePerksByID) do
+        total = total + interfaces.ErnPerkFramework.getPerks()[foundID]:cost()
+    end
+    return total
+end
+
 local function hasPerk(id)
     for _, foundID in ipairs(activePerksByID) do
         if foundID == id then
@@ -44,7 +52,7 @@ local function hasPerk(id)
 end
 
 local function shouldShowUI()
-    local remainingPoints = totalAllowedPoints() - #activePerksByID
+    local remainingPoints = totalAllowedPoints() - currentSpentPoints()
     -- now we have to see if there is at least one perk that we could buy
     for id, perk in pairs(interfaces.ErnPerkFramework.getPerks()) do
         if (not hasPerk(id)) and perk:evaluateRequirements().satisfied and perk:cost() <= remainingPoints then
@@ -60,12 +68,11 @@ local function syncPerks()
     -- this handles perks that require other perks to exist.
     local currentCount = #activePerksByID
     local allowedPoints = totalAllowedPoints()
-    while true do
+    for i = 1, 1000 do
         local currentPerksTotalCost = 0
         local filteredPerks = {}
-        -- iterate from newest perk to oldest perk.
-        for idx = #activePerksByID, 1, -1 do
-            local perkID = activePerksByID[idx]
+        -- iterate from oldest to newest.
+        for _, perkID in ipairs(activePerksByID) do
             local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
             if (foundPerk == nil) then
                 -- Maybe don't do this, so late-registering providers aren't deleted.
@@ -76,7 +83,6 @@ local function syncPerks()
                     foundPerk:onRemove()
                 else
                     currentPerksTotalCost = currentPerksTotalCost + foundPerk:cost()
-                    log(nil, "Adding perk " .. perkID .. "!")
                     table.insert(filteredPerks, perkID)
                 end
             else
@@ -87,11 +93,13 @@ local function syncPerks()
         activePerksByID = filteredPerks
 
         if currentCount == #activePerksByID then
+            -- there were no changes, so stop.
             break
         end
     end
     -- now that we're done removing them, apply them.
     for _, perkID in ipairs(activePerksByID) do
+        log(nil, "Adding perk " .. perkID .. "!")
         local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
         foundPerk:onAdd()
     end
@@ -132,8 +140,20 @@ local function addPerk(data)
         error("addPerk(" .. tostring(data.perkID) .. ") called with bad perkID.")
         return
     end
-    table.insert(activePerksByID, data.perkID)
-    foundPerk:onAdd()
+    if foundPerk:evaluateRequirements().satisfied then
+        local totalAllowed = totalAllowedPoints()
+        if currentSpentPoints() + foundPerk:cost() <= totalAllowed then
+            table.insert(activePerksByID, data.perkID)
+            foundPerk:onAdd()
+        else
+            log(nil,
+                "Perk " ..
+                tostring(data.perkID) ..
+                " point cost can't be paid. Can't add it.")
+        end
+    else
+        log(nil, "Perk " .. tostring(data.perkID) .. " requirements are not met. Can't add it.")
+    end
 end
 
 local function removePerk(data)
@@ -188,7 +208,7 @@ local function onConsoleCommand(mode, command, selectedObject)
         pself:sendEvent(settings.MOD_NAME .. "addPerk",
             { perkID = add })
     elseif show ~= nil then
-        local remainingPoints = totalAllowedPoints() - #activePerksByID
+        local remainingPoints = totalAllowedPoints() - currentSpentPoints()
         pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
             { active = activePerksByID, remainingPoints = remainingPoints })
     end
@@ -198,7 +218,7 @@ local function UiModeChanged(data)
     -- spawn perk UI after the levelup UI.
     if (data.newMode == nil) and (data.oldMode == 'LevelUp') then
         if shouldShowUI() then
-            local remainingPoints = totalAllowedPoints() - #activePerksByID
+            local remainingPoints = totalAllowedPoints() - currentSpentPoints()
             pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
                 { active = activePerksByID, remainingPoints = remainingPoints })
         end

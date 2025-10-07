@@ -26,7 +26,14 @@ for i = 1, 4, 1 do
     local requirements = {
         interfaces.ErnPerkFramework.requirements().minimumLevel(i * i),
     }
-    if i == 2 then
+    if i == 1 then
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().
+        minimumFactionRank('thieves guild', 0))
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().
+        vampire(false))
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().
+        werewolf(false))
+    elseif i == 2 then
         table.insert(requirements, interfaces.ErnPerkFramework.requirements().
         minimumSkillLevel('sneak', 40))
     elseif i == 3 then

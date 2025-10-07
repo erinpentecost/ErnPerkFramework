@@ -34,26 +34,48 @@ local function totalAllowedPoints()
     return math.floor(settings.perksPerLevel * level)
 end
 
+local function hasPerk(id)
+    for _, foundID in ipairs(activePerksByID) do
+        if foundID == id then
+            return true
+        end
+    end
+    return false
+end
+
+local function shouldShowUI()
+    local remainingPoints = totalAllowedPoints() - #activePerksByID
+    -- now we have to see if there is at least one perk that we could buy
+    for id, perk in pairs(interfaces.ErnPerkFramework.getPerks()) do
+        if (not hasPerk(id)) and perk:evaluateRequirements().satisfied and perk:cost() <= remainingPoints then
+            return true
+        end
+    end
+    return false
+end
+
 local function syncPerks()
     log("syncPerks", "syncPerks() started.")
     -- keep calling this until the number of perks stops going down.
     -- this handles perks that require other perks to exist.
     local currentCount = #activePerksByID
-    local allowedCount = totalAllowedPoints()
+    local allowedPoints = totalAllowedPoints()
     while true do
-        local currentPerkNumber = 0
+        local currentPerksTotalCost = 0
         local filteredPerks = {}
-        for _, perkID in ipairs(activePerksByID) do
+        -- iterate from newest perk to oldest perk.
+        for idx = #activePerksByID, 1, -1 do
+            local perkID = activePerksByID[idx]
             local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
             if (foundPerk == nil) then
                 -- Maybe don't do this, so late-registering providers aren't deleted.
                 log(nil, "Removing perk " .. perkID .. ", missing.")
             elseif foundPerk:evaluateRequirements().satisfied then
-                currentPerkNumber = currentPerkNumber + 1
-                if currentPerkNumber > allowedCount then
+                if currentPerksTotalCost + foundPerk:cost() > allowedPoints then
                     log(nil, "Removing perk " .. perkID .. ", not enough points.")
                     foundPerk:onRemove()
                 else
+                    currentPerksTotalCost = currentPerksTotalCost + foundPerk:cost()
                     log(nil, "Adding perk " .. perkID .. "!")
                     table.insert(filteredPerks, perkID)
                 end
@@ -175,8 +197,8 @@ end
 local function UiModeChanged(data)
     -- spawn perk UI after the levelup UI.
     if (data.newMode == nil) and (data.oldMode == 'LevelUp') then
-        local remainingPoints = totalAllowedPoints() - #activePerksByID
-        if remainingPoints > 0 then
+        if shouldShowUI() then
+            local remainingPoints = totalAllowedPoints() - #activePerksByID
             pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
                 { active = activePerksByID, remainingPoints = remainingPoints })
         end

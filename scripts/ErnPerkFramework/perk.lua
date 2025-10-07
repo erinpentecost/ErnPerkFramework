@@ -27,6 +27,13 @@ local myui = require('scripts.ErnPerkFramework.pcp.myui')
 local PerkFunctions = {}
 PerkFunctions.__index = PerkFunctions
 
+local function resolve(field)
+    if type(field) == 'function' then
+        return field()
+    else
+        return field
+    end
+end
 
 -- NewPerk makes a new perk from a record
 function NewPerk(data)
@@ -57,11 +64,7 @@ end
 function PerkFunctions.name(self)
     local name = self.record.id
     if self.record.localizedName ~= nil then
-        if type(self.record.localizedName) == 'function' then
-            name = self.record.localizedName()
-        else
-            name = self.record.localizedName
-        end
+        name = resolve(self.record.localizedName)
     end
     return name
 end
@@ -70,14 +73,18 @@ function PerkFunctions.id(self)
     return self.record.id
 end
 
+function PerkFunctions.cost(self)
+    local cost = 1
+    if self.record.cost ~= nil then
+        cost = resolve(self.record.cost)
+    end
+    return math.floor(cost)
+end
+
 function PerkFunctions.description(self)
     local description = self.record.id .. " description"
     if self.record.localizedDescription ~= nil then
-        if type(self.record.localizedDescription) == 'function' then
-            description = self.record.localizedDescription()
-        else
-            description = self.record.localizedDescription
-        end
+        description = resolve(self.record.localizedDescription)
     end
     return description
 end
@@ -97,16 +104,9 @@ function PerkFunctions.evaluateRequirements(self)
         end
         local name = r.id
         if r.localizedName ~= nil then
-            if type(r.localizedName) == 'function' then
-                name = r.localizedName()
-            else
-                name = r.localizedName
-            end
+            name = resolve(r.localizedName)
         end
-        local hide = r.hidden
-        if type(r.hidden) == 'function' then
-            hide = r.hidden()
-        end
+        local hide = resolve(r.hidden)
 
         table.insert(reqs, { id = r.id, name = name, satisfied = satisfied, hidden = (hide and (not satisfied)) })
     end
@@ -183,10 +183,7 @@ function PerkFunctions.requirementsLayout(self)
             reqLayout.props.textColor = myui.textColors.negative
         end
 
-        local hide = req.hidden
-        if type(req.hidden) == 'function' then
-            hide = req.hidden()
-        end
+        local hide = resolve(req.hidden)
         if hide then
             reqLayout.props.text = localization("hiddenRequirement", {})
         end

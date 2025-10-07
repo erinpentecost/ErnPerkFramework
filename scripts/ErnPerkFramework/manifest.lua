@@ -114,7 +114,17 @@ local function registerPerk(data)
             error(
                 "registerPerk(" ..
                 tostring(data.id) ..
-                ") perk data has a 'hidden' field, which must be a boolean or a functino that returns a boolean.",
+                ") perk data has a 'hidden' field, which must be a boolean or a function that returns a boolean.",
+                2)
+            return false
+        end
+    end
+    if (data.cost ~= nil) then
+        if (type(data.cost) ~= "function") and (type(data.cost) ~= "number") then
+            error(
+                "registerPerk(" ..
+                tostring(data.id) ..
+                ") perk data has a 'cost' field, which must be a number or a function that returns a number.",
                 2)
             return false
         end

@@ -22,6 +22,7 @@ local types = require("openmw.types")
 local log = require("scripts.ErnPerkFramework.log")
 local util = require('openmw.util')
 local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
+local settings = require("scripts.ErnPerkFramework.settings")
 local ui = require('openmw.ui')
 --local ui = require('openmw.interfaces').UI
 local myui = require('scripts.ErnPerkFramework.pcp.myui')
@@ -47,6 +48,8 @@ local perkListElement = ui.create {
     type = ui.TYPE.Flex,
     props = {
         horizontal = false,
+        -- relativePosition can be used to scroll the perks list up and down
+        relativePosition = util.vector2(0, -0.5),
     },
     content = ui.content {}
 }
@@ -156,19 +159,23 @@ local function menuLayout()
                         props = {
                             horizontal = true,
                             autoSize = false,
-                            size = ui.screenSize() * 0.75,
+                            size = ui.screenSize() * 0.75 * settings.uiScale,
                         },
                         content = ui.content {
-                            perkListElement,
                             {
-                                template = interfaces.MWUI.verticalLineThick,
-                            },
-                            {
-                                -- detail page
-                                name = 'interactiveFlex',
-                                type = ui.TYPE.Flex,
+                                type = ui.TYPE.Widget,
                                 props = {
-                                    arrange = ui.ALIGNMENT.End,
+                                    relativeSize = util.vector2(0.333, 1),
+                                },
+                                content = ui.content { perkListElement }
+                            },
+                            myui.padWidget(8, 0),
+                            {
+                                -- detail page section
+                                type = ui.TYPE.Widget,
+                                props = {
+                                    arrange = ui.ALIGNMENT.Center,
+                                    relativeSize = util.vector2(1, 1),
                                 },
                                 content = ui.content {
                                     perkDetailElement,
@@ -178,6 +185,8 @@ local function menuLayout()
                                         type = ui.TYPE.Flex,
                                         props = {
                                             horizontal = true,
+                                            relativePosition = util.vector2(0, 1),
+                                            anchor = util.vector2(0, 1)
                                         },
                                         content = ui.content {
                                             pickButtonElement,

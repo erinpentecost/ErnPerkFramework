@@ -130,14 +130,16 @@ function PerkFunctions.artLayout(self)
     end
     return {
         type = ui.TYPE.Image,
-        alignment = ui.ALIGNMENT.Start,
+        alignment = ui.ALIGNMENT.Center,
         props = {
             resource = ui.texture {
                 path = path
             },
-            size = util.vector2(256, 128)
+            size = util.vector2(256, 128),
+            relativePosition = util.vector2(0, 0.5),
         },
-        size = util.vector2(256, 128)
+        --size = util.vector2(256, 128)
+        --relativeSize = util.vector2(1, 0.3),
     }
 end
 
@@ -146,7 +148,7 @@ function PerkFunctions.requirementsLayout(self)
         name = "vflex",
         type = ui.TYPE.Flex,
         props = {
-            arrange = ui.ALIGNMENT.Center,
+            arrange = ui.ALIGNMENT.Start,
             horizontal = false,
         },
         content = ui.content {},
@@ -161,7 +163,7 @@ function PerkFunctions.requirementsLayout(self)
             props = {
                 textAlignH = ui.ALIGNMENT.Start,
                 textAlignV = ui.ALIGNMENT.Center,
-                relativePosition = util.vector2(0, 0.5),
+                --relativePosition = util.vector2(0, 0.5),
                 text = localization("noRequirement", {}),
             },
         }
@@ -175,7 +177,7 @@ function PerkFunctions.requirementsLayout(self)
             props = {
                 textAlignH = ui.ALIGNMENT.Start,
                 textAlignV = ui.ALIGNMENT.Center,
-                relativePosition = util.vector2(0, 0.5),
+                --relativePosition = util.vector2(0, 0.5),
                 text = req.name,
             },
         }
@@ -199,8 +201,9 @@ function PerkFunctions.detailLayout(self)
         name = "detailLayout",
         type = ui.TYPE.Flex,
         props = {
-            arrange = ui.ALIGNMENT.Center,
+            arrange = ui.ALIGNMENT.Start,
             horizontal = false,
+            relativeSize = util.vector2(1, 1),
         },
         content = ui.content {},
     }
@@ -208,11 +211,11 @@ function PerkFunctions.detailLayout(self)
     local requirementsHeader = {
         template = interfaces.MWUI.templates.textHeader,
         type = ui.TYPE.Text,
-        alignment = ui.ALIGNMENT.End,
+        alignment = ui.ALIGNMENT.Start,
         props = {
             textAlignH = ui.ALIGNMENT.Start,
             textAlignV = ui.ALIGNMENT.Center,
-            relativePosition = util.vector2(0, 0.5),
+            --relativePosition = util.vector2(0, 0.5),
             text = localization("requirements", {}),
         },
     }
@@ -220,11 +223,11 @@ function PerkFunctions.detailLayout(self)
     local nameHeader = {
         template = interfaces.MWUI.templates.textHeader,
         type = ui.TYPE.Text,
-        alignment = ui.ALIGNMENT.End,
+        alignment = ui.ALIGNMENT.Start,
         props = {
             textAlignH = ui.ALIGNMENT.Start,
             textAlignV = ui.ALIGNMENT.Center,
-            relativePosition = util.vector2(0, 0.5),
+            --relativePosition = util.vector2(0, 0.5),
             text = self:name(),
         },
     }
@@ -232,11 +235,11 @@ function PerkFunctions.detailLayout(self)
     local detailText = {
         template = interfaces.MWUI.templates.textParagraph,
         --type = ui.TYPE.Text,
-        alignment = ui.ALIGNMENT.End,
+        alignment = ui.ALIGNMENT.Start,
         props = {
             textAlignH = ui.ALIGNMENT.Start,
             textAlignV = ui.ALIGNMENT.Center,
-            relativePosition = util.vector2(0, 0.5),
+            --relativePosition = util.vector2(0, 0.5),
             text = self:description(),
         },
     }

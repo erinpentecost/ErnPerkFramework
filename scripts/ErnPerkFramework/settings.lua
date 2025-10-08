@@ -46,6 +46,17 @@ local function init()
                 }
             },
             {
+                key = "uiScale",
+                name = "uiScale",
+                default = 1,
+                renderer = "number",
+                argument = {
+                    integer = false,
+                    min = 0,
+                    max = 10,
+                }
+            },
+            {
                 key = "disable",
                 name = "disableName",
                 description = "disableDescription",

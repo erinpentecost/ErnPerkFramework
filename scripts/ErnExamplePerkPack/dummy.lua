@@ -21,7 +21,7 @@ local ui = require('openmw.ui')
 
 -- Test in-game with console command:
 -- lua addperk ErnExamplePerkPack_dummy_1
-for i = 1, 4, 1 do
+for i = 1, 50, 1 do
     local id = ns .. "_dummy_" .. tostring(i)
     local requirements = {
         interfaces.ErnPerkFramework.requirements().minimumLevel(i * i),
@@ -44,6 +44,7 @@ for i = 1, 4, 1 do
     interfaces.ErnPerkFramework.registerPerk({
         id = id,
         requirements = requirements,
+        localizedName = "Example " .. tostring(i),
         localizedDescription = "perk description " .. tostring(i),
         onAdd = function()
             local logLine = id .. " perk added!"

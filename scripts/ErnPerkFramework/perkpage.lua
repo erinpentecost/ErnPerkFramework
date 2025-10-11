@@ -52,6 +52,40 @@ local perkDetailElement = ui.create {
         anchor = util.vector2(0, 0.5) }]]
 }
 
+local function getPerkIDs(filterFn, sortFn)
+    local filter = filterFn or function(e)
+        return true
+    end
+    local sort = sortFn or function(e)
+        for _, foundID in ipairs(activePerksByID) do
+            if foundID == e then
+                return 100
+            end
+        end
+        if interfaces.ErnPerkFramework.getPerks()[e]:evaluateRequirements().satisfied then
+            return 0
+        end
+        return 50
+    end
+
+    local weights = {}
+    local out = {}
+    for _, e in ipairs(interfaces.ErnPerkFramework.getPerkIDs()) do
+        if filter(e) then
+            table.insert(out, e)
+            weights[e] = sort(e)
+        end
+    end
+    table.sort(out, function(a, b)
+        if weights[a] ~= weights[b] then
+            return weights[a] < weights[b]
+        else
+            return interfaces.ErnPerkFramework.getPerks()[a]:name() < interfaces.ErnPerkFramework.getPerks()[b]:name()
+        end
+    end)
+    return out
+end
+
 -- index of the selected perk, by the full perk list
 local function getSelectedIndex()
     if perkList ~= nil then
@@ -60,12 +94,12 @@ local function getSelectedIndex()
     return 1
 end
 local function getSelectedPerk()
-    local selectedPerkID = interfaces.ErnPerkFramework.getPerkIDs()[getSelectedIndex()]
+    local selectedPerkID = getPerkIDs()[getSelectedIndex()]
     return interfaces.ErnPerkFramework.getPerks()[selectedPerkID]
 end
 
 local function hasPerk(idx)
-    local testID = interfaces.ErnPerkFramework.getPerkIDs()[idx]
+    local testID = getPerkIDs()[idx]
     for _, foundID in ipairs(activePerksByID) do
         if foundID == testID then
             return true
@@ -175,7 +209,7 @@ perkList = list.NewList(
         if type(idx) ~= "number" then
             error("idx must be a number")
         end
-        local perkIDs = interfaces.ErnPerkFramework.getPerkIDs()
+        local perkIDs = getPerkIDs()
         return perkNameElement(interfaces.ErnPerkFramework.getPerks()[perkIDs[idx]], idx)
     end
 )
@@ -271,7 +305,7 @@ local function menuLayout()
 end
 
 local function drawPerksList()
-    local perkIDs = interfaces.ErnPerkFramework.getPerkIDs()
+    local perkIDs = getPerkIDs()
     perkList:setTotal(#perkIDs)
     perkList:update()
 end
@@ -291,7 +325,7 @@ end
 
 local function showPerkUI(data)
     log(nil, "showPerkUI start")
-    local allPerkIDs = interfaces.ErnPerkFramework.getPerkIDs()
+    local allPerkIDs = getPerkIDs()
     if #allPerkIDs == 0 then
         log(nil, "No perks found.")
         return

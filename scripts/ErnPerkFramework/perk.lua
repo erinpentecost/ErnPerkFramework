@@ -137,6 +137,7 @@ function PerkFunctions.artLayout(self)
             },
             size = util.vector2(256, 128),
             relativePosition = util.vector2(0, 0.5),
+            anchor = util.vector2(0, 0.5),
         },
         --size = util.vector2(256, 128)
         --relativeSize = util.vector2(1, 0.3),
@@ -237,6 +238,7 @@ function PerkFunctions.detailLayout(self)
         --type = ui.TYPE.Text,
         alignment = ui.ALIGNMENT.Start,
         props = {
+            --relativeSize = util.vector2(0, 1),
             textAlignH = ui.ALIGNMENT.Start,
             textAlignV = ui.ALIGNMENT.Center,
             --relativePosition = util.vector2(0, 0.5),

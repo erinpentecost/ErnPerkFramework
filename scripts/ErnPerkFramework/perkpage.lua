@@ -43,6 +43,9 @@ local menu = nil
 local perkDetailElement = ui.create {
     name = "detailLayout",
     type = ui.TYPE.Flex,
+    --[[ props = {
+        relativePosition = util.vector2(0, 0.5),
+        anchor = util.vector2(0, 0.5) }]]
 }
 
 -- index of the selected perk, by the full perk list
@@ -68,6 +71,7 @@ local function viewPerk(perkID, idx)
     perkDetailElement.layout = foundPerk:detailLayout()
     perkDetailElement:update()
     log(nil, "viewPerk end")
+    -- todo: also send event to List to update Selected to idx
 end
 
 local function perkNameElement(perkObj, idx)
@@ -100,18 +104,6 @@ local perkList = list.NewList(
     end
 )
 
-local perkListElement = ui.create {
-    -- list o' perks
-    name = 'perkList',
-    type = ui.TYPE.Flex,
-    props = {
-        horizontal = false,
-        -- relativePosition can be used to scroll the perks list up and down
-        relativePosition = util.vector2(0, -0.5),
-    },
-    content = ui.content {}
-}
-
 local activePerks = {}
 local remainingPoints = 0
 
@@ -120,13 +112,9 @@ local function closeUI()
         log(nil, "closing ui")
         menu:destroy()
         menu = nil
-        -- need to destroy everything before leaving the mode,
-        -- or orphaned button callbacks will invoke focusLost() and
-        -- crash the script.
-        for _, elem in ipairs(perkListElement.layout.content) do
-            elem:destroy()
-        end
-        perkDetailElement:destroy()
+
+        perkList:destroy()
+
         perkDetailElement = ui.create {
             name = "detailLayout",
             type = ui.TYPE.Flex,
@@ -194,19 +182,10 @@ local function menuLayout()
                         props = {
                             horizontal = true,
                             autoSize = false,
-                            size = ui.screenSize() * 0.75 * settings.uiScale,
+                            size = util.vector2(800, 480) * settings.uiScale,
                         },
                         content = ui.content {
-                            {
-                                type = ui.TYPE.Widget,
-                                props = {
-                                    relativeSize = util.vector2(0.333, 1),
-                                },
-                                content = ui.content {
-                                    --perkListElement
-                                    perkList.containerElement
-                                }
-                            },
+                            perkList.containerElement,
                             myui.padWidget(8, 0),
                             {
                                 -- detail page section
@@ -214,10 +193,11 @@ local function menuLayout()
                                 props = {
                                     arrange = ui.ALIGNMENT.Center,
                                     relativeSize = util.vector2(1, 1),
+                                    --relativePosition = util.vector2(0.5, 0),
                                 },
                                 content = ui.content {
                                     perkDetailElement,
-                                    myui.padWidget(0, 8),
+                                    --myui.padWidget(0, 8),
                                     {
                                         name = 'footer',
                                         type = ui.TYPE.Flex,
@@ -241,22 +221,6 @@ local function menuLayout()
             }
         }
     }
-end
-
-
-
-local function drawPerkList()
-    local perkIDs = interfaces.ErnPerkFramework.getPerkIDs()
-    for _, old in ipairs(perkListElement.layout.content) do
-        old:destroy()
-    end
-    perkListElement.layout.content = ui.content {}
-    for idx, perkID in ipairs(perkIDs) do
-        log(nil, "Making button for " .. tostring(perkID))
-        local newName = perkNameElement(interfaces.ErnPerkFramework.getPerks()[perkID], idx)
-        table.insert(perkListElement.layout.content, newName)
-    end
-    perkListElement:update()
 end
 
 local function drawPerksList()
@@ -317,14 +281,18 @@ local function onFrame(dt)
     end
 
     if input.isKeyPressed(input.KEY.DownArrow) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.DPadDown) then
-        perkList:scroll(-1)
-        selectedPerkIndex = perkList.selectedIndex
-        debounce = 5
-    end
-    if input.isKeyPressed(input.KEY.UpArrow) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.DPadUp) then
+        log(nil, "Down key")
         perkList:scroll(1)
         selectedPerkIndex = perkList.selectedIndex
         debounce = 5
+        redraw()
+    end
+    if input.isKeyPressed(input.KEY.UpArrow) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.DPadUp) then
+        log(nil, "Up key")
+        perkList:scroll(-1)
+        selectedPerkIndex = perkList.selectedIndex
+        debounce = 5
+        redraw()
     end
 end
 

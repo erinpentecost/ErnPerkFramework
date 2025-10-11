@@ -34,7 +34,7 @@ function NewList(renderer, props)
     local new = {
         topIndex = 1,
         selectedIndex = 1,
-        displayCount = 10,
+        displayCount = 14,
         totalCount = 1,
         renderer = renderer,
         containerElement = ui.create {
@@ -50,6 +50,13 @@ end
 
 function ListFunctions.clamp(self, index)
     return ((index - 1) % self.totalCount) + 1
+end
+
+function ListFunctions.destroy(self)
+    for _, old in ipairs(self.containerElement.layout.content) do
+        old:destroy()
+    end
+    self.containerElement.layout.content = ui.content {}
 end
 
 function ListFunctions.update(self)

@@ -40,6 +40,7 @@ local localization = core.l10n(MOD_NAME)
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/openmw_ui.html##(Template)
 
 local menu = nil
+local perkList = nil
 local perkDetailElement = ui.create {
     name = "detailLayout",
     type = ui.TYPE.Flex,
@@ -55,7 +56,11 @@ local function getSelectedPerk()
     return interfaces.ErnPerkFramework.getPerks()[selectedPerkID]
 end
 
+-- viewPerk shows the perk details after a click on a button or redraw
 local function viewPerk(perkID, idx)
+    if type(idx) ~= "number" then
+        error("idx must be a number")
+    end
     log(nil, "viewPerk start")
     local foundPerk = perkID
     if type(perkID) == "string" then
@@ -71,15 +76,20 @@ local function viewPerk(perkID, idx)
     perkDetailElement.layout = foundPerk:detailLayout()
     perkDetailElement:update()
     log(nil, "viewPerk end")
-    -- todo: also send event to List to update Selected to idx
+    if perkList ~= nil then
+        perkList:setSelectedIndex(idx)
+        perkList:update()
+    end
 end
 
+-- perkNameElement renders a perk button in a list
 local function perkNameElement(perkObj, idx)
     print("making Element for " .. perkObj:id() .. " at idx " .. idx)
     -- this is the perk name as it appears in the selection list.
-    local met = perkObj:evaluateRequirements().satisfied
     local color = 'normal'
-    if met == false then
+    if idx == selectedPerkIndex then
+        color = 'active'
+    elseif perkObj:evaluateRequirements().satisfied == false then
         color = 'disabled'
     end
 
@@ -97,8 +107,11 @@ local function perkNameElement(perkObj, idx)
     return selectButton
 end
 
-local perkList = list.NewList(
+perkList = list.NewList(
     function(idx)
+        if type(idx) ~= "number" then
+            error("idx must be a number")
+        end
         local perkIDs = interfaces.ErnPerkFramework.getPerkIDs()
         return perkNameElement(interfaces.ErnPerkFramework.getPerks()[perkIDs[idx]], idx)
     end
@@ -232,7 +245,7 @@ end
 local function redraw()
     log(nil, "redraw start")
     drawPerksList()
-    viewPerk(getSelectedPerk())
+    viewPerk(getSelectedPerk(), selectedPerkIndex)
 
     if menu ~= nil then
         menu:update()
@@ -261,13 +274,13 @@ local function showPerkUI(data)
     log(nil, "showPerkUI end")
 end
 
+
 local function onMouseWheel(direction)
     if direction < 0 then
         perkList:scroll(-1)
     else
         perkList:scroll(1)
     end
-
     perkList:update()
 end
 

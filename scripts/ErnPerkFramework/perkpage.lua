@@ -50,9 +50,14 @@ local perkDetailElement = ui.create {
 }
 
 -- index of the selected perk, by the full perk list
-local selectedPerkIndex = 1
+local function getSelectedIndex()
+    if perkList ~= nil then
+        return perkList.selectedIndex
+    end
+    return 1
+end
 local function getSelectedPerk()
-    local selectedPerkID = interfaces.ErnPerkFramework.getPerkIDs()[selectedPerkIndex]
+    local selectedPerkID = interfaces.ErnPerkFramework.getPerkIDs()[getSelectedIndex()]
     return interfaces.ErnPerkFramework.getPerks()[selectedPerkID]
 end
 
@@ -70,7 +75,9 @@ local function viewPerk(perkID, idx)
         error("bad perk: " .. tostring(perkID))
         return
     end
-    selectedPerkIndex = idx
+    if perkList ~= nil then
+        perkList.selectedIndex = idx
+    end
 
     log(nil, "Showing detail for perk " .. foundPerk:name())
     perkDetailElement.layout = foundPerk:detailLayout()
@@ -87,7 +94,7 @@ local function perkNameElement(perkObj, idx)
     print("making Element for " .. perkObj:id() .. " at idx " .. idx)
     -- this is the perk name as it appears in the selection list.
     local color = 'normal'
-    if idx == selectedPerkIndex then
+    if idx == getSelectedIndex() then
         color = 'active'
     elseif perkObj:evaluateRequirements().satisfied == false then
         color = 'disabled'
@@ -245,7 +252,7 @@ end
 local function redraw()
     log(nil, "redraw start")
     drawPerksList()
-    viewPerk(getSelectedPerk(), selectedPerkIndex)
+    viewPerk(getSelectedPerk(), getSelectedIndex())
 
     if menu ~= nil then
         menu:update()
@@ -266,7 +273,7 @@ local function showPerkUI(data)
         activePerks = data.active
         remainingPoints = data.remainingPoints
 
-        selectedPerkIndex = 1
+        perkList.selectedIndex = 1
 
         menu = ui.create(menuLayout())
         redraw()
@@ -281,7 +288,6 @@ local function onMouseWheel(direction)
     else
         perkList:scroll(1)
     end
-    selectedPerkIndex = perkList.selectedIndex
     redraw()
 end
 
@@ -297,14 +303,12 @@ local function onFrame(dt)
     if input.isKeyPressed(input.KEY.DownArrow) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.DPadDown) then
         log(nil, "Down key")
         perkList:scroll(1)
-        selectedPerkIndex = perkList.selectedIndex
         debounce = 5
         redraw()
     end
     if input.isKeyPressed(input.KEY.UpArrow) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.DPadUp) then
         log(nil, "Up key")
         perkList:scroll(-1)
-        selectedPerkIndex = perkList.selectedIndex
         debounce = 5
         redraw()
     end

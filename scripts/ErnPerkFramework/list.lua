@@ -41,7 +41,12 @@ function NewList(renderer, props)
         containerElement = ui.create {
             name = 'listRoot',
             type = ui.TYPE.Flex,
-            props = props or { horizontal = false },
+            props = props or {
+                horizontal = false,
+                --autoSize = false,
+                size = util.vector2(0, 480),
+                relativeSize = util.vector2(1, 0),
+            },
             content = ui.content {}
         },
         thumbElement = ui.create {
@@ -109,7 +114,8 @@ function ListFunctions.destroy(self)
 end
 
 function ListFunctions.height(self)
-    return 480
+    return self.containerElement.layout.props.size.y
+    --return 480
 end
 
 function ListFunctions.setThumbEvents(self)
@@ -239,6 +245,8 @@ function ListFunctions.update(self)
     for i = self.topIndex, self.topIndex + math.min(self.displayCount, self.totalCount) do
         local modI = self:clamp(i)
         local entryElement = self.renderer(modI, modI == self.selectedIndex)
+        entryElement.layout['external'] = { grow = 1 }
+        entryElement:update()
         table.insert(self.containerElement.layout.content, entryElement)
     end
     self.containerElement:update()

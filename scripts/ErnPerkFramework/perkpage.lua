@@ -123,6 +123,7 @@ perkList = list.NewList(
         return perkNameElement(interfaces.ErnPerkFramework.getPerks()[perkIDs[idx]], idx)
     end
 )
+--perkList.root.layout['external'] = { grow = 0, stretch = 0.5 }
 
 local activePerks = {}
 local remainingPoints = 0
@@ -202,7 +203,7 @@ local function menuLayout()
                         props = {
                             horizontal = true,
                             autoSize = false,
-                            size = util.vector2(800, 480) * settings.uiScale,
+                            size = util.vector2(800, 480) --* settings.uiScale,
                         },
                         content = ui.content {
                             perkList.root,
@@ -215,6 +216,7 @@ local function menuLayout()
                                     relativeSize = util.vector2(1, 1),
                                     --relativePosition = util.vector2(0.5, 0),
                                 },
+                                external = { grow = 0.667 },
                                 content = ui.content {
                                     perkDetailElement,
                                     --myui.padWidget(0, 8),

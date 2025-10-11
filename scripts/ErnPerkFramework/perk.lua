@@ -206,6 +206,7 @@ function PerkFunctions.detailLayout(self)
             horizontal = false,
             relativeSize = util.vector2(1, 1),
         },
+        external = { grow = 1 },
         content = ui.content {},
     }
 

@@ -92,6 +92,7 @@ function NewList(renderer, props)
                     new.thumbElement
                 }
             },
+            myui.padWidget(8, 0),
             new.containerElement
         }
     }

@@ -25,7 +25,7 @@ local util = require('openmw.util')
 local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
 local settings = require("scripts.ErnPerkFramework.settings")
 local ui = require('openmw.ui')
---local ui = require('openmw.interfaces').UI
+local aux_util = require('openmw_aux.util')
 local myui = require('scripts.ErnPerkFramework.pcp.myui')
 local list = require('scripts.ErnPerkFramework.list')
 local core = require("openmw.core")
@@ -38,6 +38,9 @@ local localization = core.l10n(MOD_NAME)
 --
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/widgets/widget.html#properties
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/openmw_ui.html##(Template)
+
+local activePerksByID = {}
+local remainingPoints = 0
 
 local menu = nil
 local perkList = nil
@@ -60,6 +63,55 @@ local function getSelectedPerk()
     local selectedPerkID = interfaces.ErnPerkFramework.getPerkIDs()[getSelectedIndex()]
     return interfaces.ErnPerkFramework.getPerks()[selectedPerkID]
 end
+
+local function hasPerk(idx)
+    local testID = interfaces.ErnPerkFramework.getPerkIDs()[idx]
+    for _, foundID in ipairs(activePerksByID) do
+        if foundID == testID then
+            return true
+        end
+    end
+    return false
+end
+
+local function pickPerk()
+    local selectedPerk = getSelectedPerk()
+    if selectedPerk ~= nil then
+        log(nil, "Picked perk " .. selectedPerk:id())
+        local met = selectedPerk:evaluateRequirements().satisfied
+        local hasAlready = hasPerk(getSelectedIndex())
+        if (met == true) and (not hasAlready) then
+            pself:sendEvent(MOD_NAME .. "closePerkUI")
+            log(nil, "Adding perk " .. selectedPerk:id())
+            pself:sendEvent(MOD_NAME .. "addPerk",
+                { perkID = selectedPerk:id() })
+        end
+    end
+end
+
+local pickButtonElement = ui.create {}
+
+local function updatePickButtonElement()
+    --pickButtonElement:destroy()
+    local color = 'normal'
+    local selectedPerk = getSelectedPerk()
+    if selectedPerk ~= nil then
+        local hasAlready = hasPerk(getSelectedIndex())
+        if (not selectedPerk:evaluateRequirements().satisfied) or hasAlready then
+            color = 'disabled'
+        end
+    end
+    pickButtonElement.layout = myui.createTextButton(
+        pickButtonElement,
+        localization('pickButton'),
+        color,
+        'pickButton',
+        {},
+        util.vector2(129, 17),
+        pickPerk)
+    pickButtonElement:update()
+end
+updatePickButtonElement()
 
 -- viewPerk shows the perk details after a click on a button or redraw
 local function viewPerk(perkID, idx)
@@ -87,6 +139,8 @@ local function viewPerk(perkID, idx)
         perkList:setSelectedIndex(idx)
         perkList:update()
     end
+
+    updatePickButtonElement()
 end
 
 -- perkNameElement renders a perk button in a list
@@ -96,6 +150,8 @@ local function perkNameElement(perkObj, idx)
     local color = 'normal'
     if idx == getSelectedIndex() then
         color = 'active'
+    elseif hasPerk(idx) then
+        color = 'disabled'
     elseif perkObj:evaluateRequirements().satisfied == false then
         color = 'disabled'
     end
@@ -123,10 +179,6 @@ perkList = list.NewList(
         return perkNameElement(interfaces.ErnPerkFramework.getPerks()[perkIDs[idx]], idx)
     end
 )
---perkList.root.layout['external'] = { grow = 0, stretch = 0.5 }
-
-local activePerks = {}
-local remainingPoints = 0
 
 local function closeUI()
     if menu ~= nil then
@@ -143,32 +195,6 @@ local function closeUI()
         interfaces.UI.removeMode('Interface')
     end
 end
-
-
-local function pickPerk()
-    local selectedPerk = getSelectedPerk()
-    if selectedPerk ~= nil then
-        log(nil, "Picked perk " .. selectedPerk:id())
-        local met = selectedPerk:evaluateRequirements().satisfied
-        if met == true then
-            closeUI()
-            log(nil, "Adding perk " .. selectedPerk:id())
-            pself:sendEvent(MOD_NAME .. "addPerk",
-                { perkID = selectedPerk:id() })
-        end
-    end
-end
-
-local pickButtonElement = ui.create {}
-pickButtonElement.layout = myui.createTextButton(
-    pickButtonElement,
-    localization('pickButton'),
-    'normal',
-    'pickButton',
-    {},
-    util.vector2(129, 17),
-    pickPerk)
-pickButtonElement:update()
 
 local cancelButtonElement = ui.create {}
 cancelButtonElement.layout = myui.createTextButton(
@@ -216,7 +242,7 @@ local function menuLayout()
                                     relativeSize = util.vector2(1, 1),
                                     --relativePosition = util.vector2(0.5, 0),
                                 },
-                                external = { grow = 0.667 },
+                                external = { grow = 1 },
                                 content = ui.content {
                                     perkDetailElement,
                                     --myui.padWidget(0, 8),
@@ -225,16 +251,15 @@ local function menuLayout()
                                         type = ui.TYPE.Flex,
                                         props = {
                                             horizontal = true,
-                                            relativePosition = util.vector2(0, 1),
-                                            anchor = util.vector2(0, 1)
+                                            relativePosition = util.vector2(0.5, 1),
+                                            anchor = util.vector2(0.5, 1)
                                         },
                                         content = ui.content {
                                             pickButtonElement,
                                             myui.padWidget(8, 0),
                                             cancelButtonElement
                                         },
-                                    },
-
+                                    }
                                 }
                             }
                         }
@@ -256,6 +281,8 @@ local function redraw()
     drawPerksList()
     viewPerk(getSelectedPerk(), getSelectedIndex())
 
+    updatePickButtonElement()
+
     if menu ~= nil then
         menu:update()
     end
@@ -272,7 +299,8 @@ local function showPerkUI(data)
     if menu == nil then
         interfaces.UI.setMode('Interface', { windows = {} })
         log(nil, "Showing Perk UI...")
-        activePerks = data.active
+        log(nil, aux_util.deepToString(data.activePerksByID, 4))
+        activePerksByID = data.activePerksByID
         remainingPoints = data.remainingPoints
 
         perkList.selectedIndex = 1

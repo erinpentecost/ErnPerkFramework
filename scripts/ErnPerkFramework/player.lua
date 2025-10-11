@@ -210,7 +210,7 @@ local function onConsoleCommand(mode, command, selectedObject)
     elseif show ~= nil then
         local remainingPoints = totalAllowedPoints() - currentSpentPoints()
         pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-            { active = activePerksByID, remainingPoints = remainingPoints })
+            { activePerksByID = activePerksByID, remainingPoints = remainingPoints })
     end
 end
 
@@ -220,7 +220,7 @@ local function UiModeChanged(data)
         if shouldShowUI() then
             local remainingPoints = totalAllowedPoints() - currentSpentPoints()
             pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-                { active = activePerksByID, remainingPoints = remainingPoints })
+                { activePerksByID = activePerksByID, remainingPoints = remainingPoints })
         end
     elseif (data.newMode == nil) then
         pself:sendEvent(settings.MOD_NAME .. "closePerkUI", {})

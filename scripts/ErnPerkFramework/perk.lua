@@ -128,7 +128,8 @@ function PerkFunctions.artLayout(self)
     if self.record.art ~= nil then
         path = self.record.art()
     end
-    return {
+
+    local img = {
         type = ui.TYPE.Image,
         alignment = ui.ALIGNMENT.Center,
         props = {
@@ -136,11 +137,25 @@ function PerkFunctions.artLayout(self)
                 path = path
             },
             size = util.vector2(256, 128),
-            relativePosition = util.vector2(0, 0.5),
-            anchor = util.vector2(0, 0.5),
+            relativePosition = util.vector2(0.5, 0),
+            anchor = util.vector2(0.5, 0),
         },
+        external = {
+            grow = 0,
+        }
         --size = util.vector2(256, 128)
         --relativeSize = util.vector2(1, 0.3),
+    }
+
+    return {
+        type = ui.TYPE.Widget,
+        props = {
+            arrange = ui.ALIGNMENT.Center,
+            relativeSize = util.vector2(1, 0),
+            size = util.vector2(0, 128),
+        },
+        external = { grow = 0 },
+        content = ui.content { img }
     }
 end
 
@@ -151,7 +166,12 @@ function PerkFunctions.requirementsLayout(self)
         props = {
             arrange = ui.ALIGNMENT.Start,
             horizontal = false,
+            relativeSize = util.vector2(1, 0),
         },
+        --[[external = {
+            grow = 1,
+            stretch = 1,
+            },]]
         content = ui.content {},
     }
 
@@ -163,9 +183,10 @@ function PerkFunctions.requirementsLayout(self)
             alignment = ui.ALIGNMENT.End,
             props = {
                 textAlignH = ui.ALIGNMENT.Start,
-                textAlignV = ui.ALIGNMENT.Center,
+                textAlignV = ui.ALIGNMENT.Start,
                 --relativePosition = util.vector2(0, 0.5),
                 text = localization("noRequirement", {}),
+                relativeSize = util.vector2(1, 0),
             },
         }
         vFlexLayout.content:add(reqLayout)
@@ -177,9 +198,10 @@ function PerkFunctions.requirementsLayout(self)
             alignment = ui.ALIGNMENT.End,
             props = {
                 textAlignH = ui.ALIGNMENT.Start,
-                textAlignV = ui.ALIGNMENT.Center,
+                textAlignV = ui.ALIGNMENT.Start,
                 --relativePosition = util.vector2(0, 0.5),
                 text = req.name,
+                relativeSize = util.vector2(1, 0),
             },
         }
         if not req.satisfied then
@@ -194,7 +216,21 @@ function PerkFunctions.requirementsLayout(self)
         vFlexLayout.content:add(reqLayout)
     end
 
-    return vFlexLayout
+    local padded = {
+        name = "vflex",
+        type = ui.TYPE.Flex,
+        props = {
+            arrange = ui.ALIGNMENT.Start,
+            horizontal = true,
+            --relativeSize = util.vector2(1, 1),
+        },
+        content = ui.content {
+            myui.padWidget(8, 0),
+            vFlexLayout
+        },
+    }
+
+    return padded
 end
 
 function PerkFunctions.detailLayout(self)
@@ -204,9 +240,15 @@ function PerkFunctions.detailLayout(self)
         props = {
             arrange = ui.ALIGNMENT.Start,
             horizontal = false,
+            autoSize = false,
             relativeSize = util.vector2(1, 1),
+            anchor = util.vector2(0.5, 0),
+            relativePosition = util.vector2(0.5, 0),
         },
-        external = { grow = 1 },
+        external = {
+            grow = 1,
+            --stretch = 1
+        },
         content = ui.content {},
     }
 
@@ -234,17 +276,56 @@ function PerkFunctions.detailLayout(self)
         },
     }
 
+    local paddedDetailText = {
+        name = "vflex",
+        type = ui.TYPE.Flex,
+        props = {
+            arrange = ui.ALIGNMENT.Start,
+            horizontal = true,
+            --relativeSize = util.vector2(1, 1),
+        },
+        content = ui.content {
+            myui.padWidget(8, 0),
+            {
+                template = interfaces.MWUI.templates.textParagraph,
+                --type = ui.TYPE.Text,
+                alignment = ui.ALIGNMENT.Start,
+                props = {
+                    --autoSize = false,
+                    --relativeSize = util.vector2(0, 1),
+                    textAlignH = ui.ALIGNMENT.Start,
+                    textAlignV = ui.ALIGNMENT.Start,
+                    --relativePosition = util.vector2(0, 0.5),
+                    text = self:description(),
+                },
+                external = {
+                    grow = 1,
+                    stretch = 1,
+                }
+            }
+        },
+        external = {
+            grow = 1,
+            stretch = 1,
+        }
+    }
+
     local detailText = {
         template = interfaces.MWUI.templates.textParagraph,
         --type = ui.TYPE.Text,
         alignment = ui.ALIGNMENT.Start,
         props = {
+            --autoSize = false,
             --relativeSize = util.vector2(0, 1),
             textAlignH = ui.ALIGNMENT.Start,
-            textAlignV = ui.ALIGNMENT.Center,
+            textAlignV = ui.ALIGNMENT.Start,
             --relativePosition = util.vector2(0, 0.5),
             text = self:description(),
         },
+        external = {
+            grow = 1,
+            stretch = 1,
+        }
     }
 
     vFlexLayout.content:add(self:artLayout())
@@ -253,7 +334,7 @@ function PerkFunctions.detailLayout(self)
     vFlexLayout.content:add(self:requirementsLayout())
     vFlexLayout.content:add(myui.padWidget(0, 4))
     vFlexLayout.content:add(nameHeader)
-    vFlexLayout.content:add(detailText)
+    vFlexLayout.content:add(paddedDetailText)
 
     return vFlexLayout
 end

@@ -20,6 +20,7 @@ local pself = require("openmw.self")
 local interfaces = require("openmw.interfaces")
 local ui = require('openmw.ui')
 local util = require('openmw.util')
+local async = require('openmw.async')
 local core = require("openmw.core")
 local localization = core.l10n(MOD_NAME)
 local myui = require('scripts.ErnPerkFramework.pcp.myui')
@@ -65,9 +66,11 @@ function NewList(renderer, props)
                     alpha = 0.625,
                     color = util.color.rgb(0, 0, 0),
                 },
+                events = {},
             },
         }
     }
+    -- set root
     new.root = ui.create {
         type = ui.TYPE.Flex,
         props = { horizontal = true },
@@ -87,8 +90,10 @@ function NewList(renderer, props)
             new.containerElement
         }
     }
-
     setmetatable(new, ListFunctions)
+    -- hook up events
+    new:setScrollBGEvents()
+    new:setThumbEvents()
     return new
 end
 
@@ -101,6 +106,101 @@ function ListFunctions.destroy(self)
         old:destroy()
     end
     self.containerElement.layout.content = ui.content {}
+end
+
+function ListFunctions.height(self)
+    return 480
+end
+
+function ListFunctions.setThumbEvents(self)
+    self.thumbElement.layout['events'] = {
+        mousePress = async:callback(function(data, elem)
+            if data.button == 1 then
+                if not elem.userData then elem.userData = {} end
+                elem.userData.isDragging = true
+                elem.userData.dragStartY = data.position.y
+                elem.userData.dragStartThumbY = elem.props.relativePosition.y * self:height()
+            end
+        end),
+
+        mouseRelease = async:callback(function(_, elem)
+            if elem.userData then
+                elem.userData.isDragging = false
+                self:update()
+            end
+        end),
+
+        mouseMove = async:callback(function(data, elem)
+            if elem.userData and elem.userData.isDragging then
+                local totalItems = self.totalCount
+                if totalItems <= self.displayCount then return end
+
+                local scrollContainerHeight = self:height()
+                local thumbHeight = (self.displayCount / self.totalCount) * scrollContainerHeight
+                local availableScrollDistance = scrollContainerHeight - thumbHeight
+                if availableScrollDistance <= 0 then return end
+
+                local deltaY = data.position.y - elem.userData.dragStartY
+                local newThumbY = math.max(0, math.min(
+                    availableScrollDistance,
+                    elem.userData.dragStartThumbY + deltaY
+                ))
+
+                elem.props.relativePosition = util.vector2(0, newThumbY / scrollContainerHeight)
+
+                local newScrollPosition = newThumbY / availableScrollDistance
+                local maxScrollIndex = math.max(1, totalItems - self.displayCount)
+                self.selectedIndex = math.floor(newScrollPosition * (maxScrollIndex - 1) + 0.5) + 1
+                self.topIndex = self.selectedIndex
+                self.thumbElement:update()
+            end
+        end),
+
+        focusGain = async:callback(function(_, elem)
+            elem.props.alpha = 0.8
+            self.thumbElement:update()
+        end),
+
+        focusLoss = async:callback(function(_, elem)
+            elem.props.alpha = 0.4
+            self.thumbElement:update()
+        end),
+    }
+    self.thumbElement:update()
+end
+
+function ListFunctions.setScrollBGEvents(self)
+    self.scrollBGElement.layout['events'] = {
+        mousePress = async:callback(function(data, elem)
+            print("bg mousePress")
+            local totalItems = self.totalCount
+            if totalItems <= self.displayCount then return end
+            local scrollAmount = math.ceil(self.displayCount / 2)
+
+            local currentThumbY = self.thumbElement.props.relativePosition.y * self:height()
+            local clickY = data.offset.y
+            if clickY < currentThumbY then
+                self.selectedIndex = self:clamp(math.max(1, self.selectedIndex - scrollAmount))
+            else
+                self.selectedIndex = self:clamp(math.min(self.totalCount - self.displayCount,
+                    self.selectedIndex - scrollAmount))
+            end
+            self:update()
+        end),
+        focusGain = async:callback(function(_, elem)
+            print("bg focusGain")
+            elem.props.alpha = 0.1
+            elem.props.color = myui.interactiveTextColors.normal.default
+            self.scrollBGElement:update()
+        end),
+        focusLoss = async:callback(function(_, elem)
+            print("bg focusLoss")
+            elem.props.alpha = 0.625
+            elem.props.color = util.color.rgb(0, 0, 0)
+            self.scrollBGElement:update()
+        end)
+    }
+    self.scrollBGElement:update()
 end
 
 function ListFunctions.updateScrollbar(self)

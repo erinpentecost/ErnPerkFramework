@@ -17,10 +17,23 @@ local ScrollbarFunctions = {}
 ScrollbarFunctions.__index = ScrollbarFunctions
 
 -- renderer is a function takes in an index and returns a UI element.
-function NewScrollbar()
+function NewScrollbar(count, renderer)
     local new = {
         currentIndex = 1,
-        scrollbarElement = ui.create {}
+        totalCount = count,
+        shownCount = 10,
+        renderer = renderer,
+        scrollbarElement = ui.create {},
+        listElement = ui.create {
+            type = ui.TYPE.Flex,
+            name = "listColumn",
+            props = {
+                horizontal = false,
+                size = v2(300, 600),
+                autoSize = false,
+            },
+            content = ui.content {},
+        }
     }
     setmetatable(new, ScrollbarFunctions)
     return new
@@ -51,59 +64,32 @@ end
 function ScrollbarFunctions.rebuildList(self, newIndex)
     --if newIndex == currentIndex then return end
     print("rebuildList", newIndex, self.currentIndex)
-    if newIndex < currentIndex then
-        for i = currentIndex - 1, newIndex, -1 do
-            local tempDestroy = flex_V_H_V2.layout.content[#flex_V_H_V2.layout.content]
-            flex_V_H_V2.layout.content[#flex_V_H_V2.layout.content] = nil
+    if newIndex < self.currentIndex then
+        for i = self.currentIndex - 1, newIndex, -1 do
+            -- delete elements out of view
+            local tempDestroy = self.listElement.layout.content[#self.listElement.layout.content]
+            self.listElement.layout.content[#self.listElement.layout.content] = nil
             tempDestroy:destroy()
-            local buttonIndex = i
-            local button
-            button = makeButton("Confirm" .. buttonIndex, { size = v2(300, 30) }, function()
-                ui.showMessage("Confirm" .. buttonIndex .. "clicked")
-                if selectedButton then
-                    selectedButton.clickbox.userData.selected = false
-                    selectedButton.applyColor()
-                end
-                button.clickbox.userData.selected = true
-                selectedButton = button
-                selectedIndex = buttonIndex
-            end, morrowindGold, root)
-            if buttonIndex == self.currentIndex then
-                selectedButton = button
-                button.clickbox.userData.selected = true
-                button.applyColor()
-            end
-            flex_V_H_V2.layout.content:insert(1, button.box)
+            -- insert new elements
+            self.listElement.layout.content:insert(1, self.renderer(i))
         end
-    elseif newIndex > currentIndex then
-        for i = currentIndex + 1, newIndex do
-            local tempDestroy = flex_V_H_V2.layout.content[1]
-            table.remove(flex_V_H_V2.layout.content, 1)
-            local buttonIndex = i + listSize
-            local button
-            button = makeButton("Confirm" .. buttonIndex, { size = v2(300, 30) }, function()
-                ui.showMessage("Confirm" .. buttonIndex .. "clicked")
-                if selectedButton then
-                    selectedButton.clickbox.userData.selected = false
-                    selectedButton.applyColor()
-                end
-                button.clickbox.userData.selected = true
-                selectedButton = button
-                selectedIndex = buttonIndex
-            end, morrowindGold, root)
-            if buttonIndex == selectedIndex then
-                selectedButton = button
-                button.clickbox.userData.selected = true
-                button.applyColor()
-            end
-            flex_V_H_V2.layout.content:add(button.box)
+    elseif newIndex > self.currentIndex then
+        for i = self.currentIndex + 1, newIndex do
+            local tempDestroy = self.listElement.layout.content[1]
+            table.remove(self.listElement.layout.content, 1)
+            local buttonIndex = i + self.shownCount
+            self.listElement.layout.content:add(self.renderer(buttonIndex))
             tempDestroy:destroy()
         end
     end
 
-    currentIndex = newIndex
-    flex_V_H_V2:update()
-    updateScrollbar()
+    self.currentIndex = newIndex
+    self.listElement:update()
+    self:updateScrollbar()
+end
+
+function ScrollbarFunctions.Element(self)
+    return self.scrollbarElement
 end
 
 function ScrollbarFunctions.BuildElement(self)
@@ -136,7 +122,7 @@ function ScrollbarFunctions.BuildElement(self)
             relativePosition = v2(0, 0),
             relativeSize = v2(1, 0),
             alpha = 0.4,
-            color = myui.interactiveTextColors.normal,
+            color = myui.interactiveTextColors.normal.default,
         },
     }
 
@@ -163,12 +149,12 @@ function ScrollbarFunctions.BuildElement(self)
                 newIndex = math.min(totalItems - self.shownCount, self.currentIndex + pageAmount)
             end
 
-            rebuildList(newIndex)
+            self:rebuildList(newIndex)
         end),
 
         focusGain = async:callback(function(_, elem)
             elem.props.alpha = 0.1
-            elem.props.color = morrowindGold
+            elem.props.color = myui.interactiveTextColors.normal.default
             self.scrollbarElement:update()
         end),
 
@@ -217,7 +203,7 @@ function ScrollbarFunctions.BuildElement(self)
                 local maxScrollIndex = math.max(1, totalItems - self.shownCount)
                 local newIndex = math.floor(newScrollPosition * (maxScrollIndex - 1) + 0.5) + 1
 
-                rebuildList(newIndex)
+                self:rebuildList(newIndex)
             end
         end),
 
@@ -238,3 +224,7 @@ function ScrollbarFunctions.BuildElement(self)
 
     return self.scrollbarElement
 end
+
+return {
+    NewScrollbar = NewScrollbar,
+}

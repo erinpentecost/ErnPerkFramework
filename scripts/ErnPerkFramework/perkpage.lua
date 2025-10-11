@@ -19,6 +19,7 @@ local interfaces = require("openmw.interfaces")
 local storage = require('openmw.storage')
 local pself = require("openmw.self")
 local types = require("openmw.types")
+local input = require("openmw.input")
 local log = require("scripts.ErnPerkFramework.log")
 local util = require('openmw.util')
 local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
@@ -26,6 +27,7 @@ local settings = require("scripts.ErnPerkFramework.settings")
 local ui = require('openmw.ui')
 --local ui = require('openmw.interfaces').UI
 local myui = require('scripts.ErnPerkFramework.pcp.myui')
+local list = require('scripts.ErnPerkFramework.list')
 local core = require("openmw.core")
 local localization = core.l10n(MOD_NAME)
 
@@ -42,6 +44,62 @@ local perkDetailElement = ui.create {
     name = "detailLayout",
     type = ui.TYPE.Flex,
 }
+
+-- index of the selected perk, by the full perk list
+local selectedPerkIndex = 1
+local function getSelectedPerk()
+    local selectedPerkID = interfaces.ErnPerkFramework.getPerkIDs()[selectedPerkIndex]
+    return interfaces.ErnPerkFramework.getPerks()[selectedPerkID]
+end
+
+local function viewPerk(perkID, idx)
+    log(nil, "viewPerk start")
+    local foundPerk = perkID
+    if type(perkID) == "string" then
+        foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
+    end
+    if foundPerk == nil then
+        error("bad perk: " .. tostring(perkID))
+        return
+    end
+    selectedPerkIndex = idx
+
+    log(nil, "Showing detail for perk " .. foundPerk:name())
+    perkDetailElement.layout = foundPerk:detailLayout()
+    perkDetailElement:update()
+    log(nil, "viewPerk end")
+end
+
+local function perkNameElement(perkObj, idx)
+    print("making Element for " .. perkObj:id() .. " at idx " .. idx)
+    -- this is the perk name as it appears in the selection list.
+    local met = perkObj:evaluateRequirements().satisfied
+    local color = 'normal'
+    if met == false then
+        color = 'disabled'
+    end
+
+    local selectButton = ui.create {}
+    selectButton.layout = myui.createTextButton(
+        selectButton,
+        perkObj:name(),
+        color,
+        'selectButton_' .. perkObj:id(),
+        {},
+        util.vector2(129, 17),
+        viewPerk,
+        { perkObj:id(), idx })
+    selectButton:update()
+    return selectButton
+end
+
+local perkList = list.NewList(
+    function(idx)
+        local perkIDs = interfaces.ErnPerkFramework.getPerkIDs()
+        return perkNameElement(interfaces.ErnPerkFramework.getPerks()[perkIDs[idx]], idx)
+    end
+)
+
 local perkListElement = ui.create {
     -- list o' perks
     name = 'perkList',
@@ -56,13 +114,6 @@ local perkListElement = ui.create {
 
 local activePerks = {}
 local remainingPoints = 0
-
--- index of the selected perk, by the full perk list
-local selectedPerkIndex = 1
-local function getSelectedPerk()
-    local selectedPerkID = interfaces.ErnPerkFramework.getPerkIDs()[selectedPerkIndex]
-    return interfaces.ErnPerkFramework.getPerks()[selectedPerkID]
-end
 
 local function closeUI()
     if menu ~= nil then
@@ -121,22 +172,6 @@ cancelButtonElement.layout = myui.createTextButton(
     closeUI)
 cancelButtonElement:update()
 
-local function viewPerk(perkID, idx)
-    local foundPerk = perkID
-    if type(perkID) == "string" then
-        foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
-    end
-    if foundPerk == nil then
-        error("bad perk: " .. tostring(perkID))
-        return
-    end
-    selectedPerkIndex = idx
-
-    log(nil, "Showing detail for perk " .. foundPerk:name())
-    perkDetailElement.layout = foundPerk:detailLayout()
-    perkDetailElement:update()
-end
-
 local function menuLayout()
     return {
         layer = 'Windows',
@@ -167,7 +202,10 @@ local function menuLayout()
                                 props = {
                                     relativeSize = util.vector2(0.333, 1),
                                 },
-                                content = ui.content { perkListElement }
+                                content = ui.content {
+                                    --perkListElement
+                                    perkList.containerElement
+                                }
                             },
                             myui.padWidget(8, 0),
                             {
@@ -205,27 +243,7 @@ local function menuLayout()
     }
 end
 
-local function perkNameElement(perkObj, idx)
-    -- this is the perk name as it appears in the selection list.
-    local met = perkObj:evaluateRequirements().satisfied
-    local color = 'normal'
-    if met == false then
-        color = 'disabled'
-    end
 
-    local selectButton = ui.create {}
-    selectButton.layout = myui.createTextButton(
-        selectButton,
-        perkObj:name(),
-        color,
-        'selectButton_' .. perkObj:id(),
-        {},
-        util.vector2(129, 17),
-        viewPerk,
-        { perkObj:id(), idx })
-    selectButton:update()
-    return selectButton
-end
 
 local function drawPerkList()
     local perkIDs = interfaces.ErnPerkFramework.getPerkIDs()
@@ -241,16 +259,25 @@ local function drawPerkList()
     perkListElement:update()
 end
 
+local function drawPerksList()
+    local perkIDs = interfaces.ErnPerkFramework.getPerkIDs()
+    perkList:setTotal(#perkIDs)
+    perkList:update()
+end
+
 local function redraw()
-    drawPerkList()
+    log(nil, "redraw start")
+    drawPerksList()
     viewPerk(getSelectedPerk())
 
     if menu ~= nil then
         menu:update()
     end
+    log(nil, "redraw end")
 end
 
 local function showPerkUI(data)
+    log(nil, "showPerkUI start")
     local allPerkIDs = interfaces.ErnPerkFramework.getPerkIDs()
     if #allPerkIDs == 0 then
         log(nil, "No perks found.")
@@ -267,6 +294,38 @@ local function showPerkUI(data)
         menu = ui.create(menuLayout())
         redraw()
     end
+    log(nil, "showPerkUI end")
+end
+
+local function onMouseWheel(direction)
+    if direction < 0 then
+        perkList:scroll(-1)
+    else
+        perkList:scroll(1)
+    end
+
+    perkList:update()
+end
+
+local debounce = 0
+local function onFrame(dt)
+    myui.processButtonAction(dt)
+
+    if debounce > 0 then
+        debounce = debounce - 1
+        return
+    end
+
+    if input.isKeyPressed(input.KEY.DownArrow) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.DPadDown) then
+        perkList:scroll(-1)
+        selectedPerkIndex = perkList.selectedIndex
+        debounce = 5
+    end
+    if input.isKeyPressed(input.KEY.UpArrow) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.DPadUp) then
+        perkList:scroll(1)
+        selectedPerkIndex = perkList.selectedIndex
+        debounce = 5
+    end
 end
 
 return {
@@ -275,6 +334,7 @@ return {
         [MOD_NAME .. "closePerkUI"] = closeUI,
     },
     engineHandlers = {
-        onFrame = myui.processButtonAction,
+        onFrame = onFrame,
+        onMouseWheel = onMouseWheel,
     }
 }

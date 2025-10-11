@@ -155,7 +155,7 @@ function PerkFunctions.requirementsLayout(self)
     }
 
     local reqs = self:evaluateRequirements()
-    if #reqs.requirements == 0 then
+    if #(reqs.requirements) == 0 then
         local reqLayout = {
             template = interfaces.MWUI.templates.textParagraph,
             --type = ui.TYPE.Text,

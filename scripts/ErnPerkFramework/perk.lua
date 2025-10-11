@@ -168,29 +168,11 @@ function PerkFunctions.requirementsLayout(self)
             horizontal = false,
             relativeSize = util.vector2(1, 0),
         },
-        --[[external = {
-            grow = 1,
-            stretch = 1,
-            },]]
         content = ui.content {},
     }
 
     local reqs = self:evaluateRequirements()
-    if #(reqs.requirements) == 0 then
-        local reqLayout = {
-            template = interfaces.MWUI.templates.textParagraph,
-            --type = ui.TYPE.Text,
-            alignment = ui.ALIGNMENT.End,
-            props = {
-                textAlignH = ui.ALIGNMENT.Start,
-                textAlignV = ui.ALIGNMENT.Start,
-                --relativePosition = util.vector2(0, 0.5),
-                text = localization("noRequirement", {}),
-                relativeSize = util.vector2(1, 0),
-            },
-        }
-        vFlexLayout.content:add(reqLayout)
-    end
+
     for i, req in ipairs(reqs.requirements) do
         local reqLayout = {
             template = interfaces.MWUI.templates.textParagraph,
@@ -213,6 +195,23 @@ function PerkFunctions.requirementsLayout(self)
             reqLayout.props.text = localization("hiddenRequirement", {})
         end
 
+        vFlexLayout.content:add(reqLayout)
+    end
+
+    -- put in <None> if no elements
+    if #(vFlexLayout.content) == 0 then
+        local reqLayout = {
+            template = interfaces.MWUI.templates.textParagraph,
+            --type = ui.TYPE.Text,
+            alignment = ui.ALIGNMENT.End,
+            props = {
+                textAlignH = ui.ALIGNMENT.Start,
+                textAlignV = ui.ALIGNMENT.Start,
+                --relativePosition = util.vector2(0, 0.5),
+                text = localization("noRequirement", {}),
+                relativeSize = util.vector2(1, 0),
+            },
+        }
         vFlexLayout.content:add(reqLayout)
     end
 
@@ -310,26 +309,54 @@ function PerkFunctions.detailLayout(self)
         }
     }
 
-    local detailText = {
-        template = interfaces.MWUI.templates.textParagraph,
-        --type = ui.TYPE.Text,
-        alignment = ui.ALIGNMENT.Start,
-        props = {
-            --autoSize = false,
-            --relativeSize = util.vector2(0, 1),
-            textAlignH = ui.ALIGNMENT.Start,
-            textAlignV = ui.ALIGNMENT.Start,
-            --relativePosition = util.vector2(0, 0.5),
-            text = self:description(),
-        },
-        external = {
-            grow = 1,
-            stretch = 1,
+    local costLayout = {}
+    -- tack on cost info if other than 0
+    -- this is a little messed up because it won't be red if there
+    -- aren't enough points.
+    if self:cost() > 1 then
+        costLayout = {
+            template = interfaces.MWUI.templates.textParagraph,
+            --type = ui.TYPE.Text,
+            alignment = ui.ALIGNMENT.End,
+            props = {
+                textAlignH = ui.ALIGNMENT.Start,
+                textAlignV = ui.ALIGNMENT.Start,
+                text = localization("costMore", { amount = self:cost() }),
+                relativeSize = util.vector2(1, 0),
+                textColor = myui.textColors.negative,
+            },
         }
-    }
+    elseif self:cost() == 0 then
+        costLayout = {
+            template = interfaces.MWUI.templates.textParagraph,
+            --type = ui.TYPE.Text,
+            alignment = ui.ALIGNMENT.End,
+            props = {
+                textAlignH = ui.ALIGNMENT.Start,
+                textAlignV = ui.ALIGNMENT.Start,
+                text = localization("costFree", {}),
+                relativeSize = util.vector2(1, 0),
+                textColor = myui.textColors.positive,
+            },
+        }
+    elseif self:cost() < 0 then
+        costLayout = {
+            template = interfaces.MWUI.templates.textParagraph,
+            --type = ui.TYPE.Text,
+            alignment = ui.ALIGNMENT.End,
+            props = {
+                textAlignH = ui.ALIGNMENT.Start,
+                textAlignV = ui.ALIGNMENT.Start,
+                text = localization("costLess", { amount = -1 * self:cost() }),
+                relativeSize = util.vector2(1, 0),
+                textColor = myui.textColors.positive,
+            },
+        }
+    end
 
     vFlexLayout.content:add(self:artLayout())
     vFlexLayout.content:add(myui.padWidget(0, 4))
+    --vFlexLayout.content:add(costLayout)
     vFlexLayout.content:add(requirementsHeader)
     vFlexLayout.content:add(self:requirementsLayout())
     vFlexLayout.content:add(myui.padWidget(0, 4))

@@ -69,7 +69,7 @@ function NewList(renderer, props)
                     relativePosition = util.vector2(0, 0),
                     relativeSize = util.vector2(1, 1),
                     alpha = 0.625,
-                    color = util.color.rgb(0, 0, 0),
+                    --color = util.color.rgb(0, 0, 0),
                 },
                 events = {},
             },

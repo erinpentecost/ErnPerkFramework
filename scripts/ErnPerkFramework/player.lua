@@ -26,9 +26,6 @@ local UI = require('openmw.interfaces').UI
 settings.init()
 local version = interfaces.ErnPerkFramework.version
 
--- activePerksByID, in the order they were chosen.
-local activePerksByID = {}
-
 local function totalAllowedPoints()
     local level = types.Actor.stats.level(pself).current
     return math.floor(settings.perksPerLevel * level)
@@ -36,14 +33,14 @@ end
 
 local function currentSpentPoints()
     local total = 0
-    for _, foundID in ipairs(activePerksByID) do
+    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
         total = total + interfaces.ErnPerkFramework.getPerks()[foundID]:cost()
     end
     return total
 end
 
 local function hasPerk(id)
-    for _, foundID in ipairs(activePerksByID) do
+    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
         if foundID == id then
             return true
         end
@@ -66,13 +63,14 @@ local function syncPerks()
     log("syncPerks", "syncPerks() started.")
     -- keep calling this until the number of perks stops going down.
     -- this handles perks that require other perks to exist.
-    local currentCount = #activePerksByID
+    local snapshot = interfaces.ErnPerkFramework.getPerksForPlayer(pself)
+    local currentCount = #snapshot
     local allowedPoints = totalAllowedPoints()
     for i = 1, 1000 do
         local currentPerksTotalCost = 0
         local filteredPerks = {}
         -- iterate from oldest to newest.
-        for _, perkID in ipairs(activePerksByID) do
+        for _, perkID in ipairs(snapshot) do
             local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
             if (foundPerk == nil) then
                 -- Maybe don't do this, so late-registering providers aren't deleted.
@@ -90,15 +88,16 @@ local function syncPerks()
                 foundPerk:onRemove()
             end
         end
-        activePerksByID = filteredPerks
+        snapshot = filteredPerks
 
-        if currentCount == #activePerksByID then
+        if currentCount == #snapshot then
             -- there were no changes, so stop.
             break
         end
     end
     -- now that we're done removing them, apply them.
-    for _, perkID in ipairs(activePerksByID) do
+    interfaces.ErnPerkFramework.setPerksForPlayer(pself, snapshot)
+    for _, perkID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
         log(nil, "Adding perk " .. perkID .. "!")
         local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
         foundPerk:onAdd()
@@ -143,7 +142,9 @@ local function addPerk(data)
     if foundPerk:evaluateRequirements().satisfied then
         local totalAllowed = totalAllowedPoints()
         if currentSpentPoints() + foundPerk:cost() <= totalAllowed then
+            local activePerksByID = interfaces.ErnPerkFramework.getPerksForPlayer(pself)
             table.insert(activePerksByID, data.perkID)
+            interfaces.ErnPerkFramework.setPerksForPlayer(pself, activePerksByID)
             foundPerk:onAdd()
         else
             log(nil,
@@ -166,32 +167,17 @@ local function removePerk(data)
         error("removePerk(" .. tostring(data.perkID) .. ") called with bad perkID.")
         return
     end
+    local activePerksByID = interfaces.ErnPerkFramework.getPerksForPlayer(pself)
     for i, p in ipairs(activePerksByID) do
         if p == data.perkID then
             table.remove(activePerksByID, i)
             break
         end
     end
+    interfaces.ErnPerkFramework.setPerksForPlayer(pself, activePerksByID)
     foundPerk:onRemove()
 end
 
-local function onSave()
-    return {
-        version = version,
-        activePerksByID = activePerksByID,
-    }
-end
-
-local function onLoad(data)
-    if (data == nil) then
-        return
-    end
-    if (not data) or (not data.version) or (data.version ~= version) then
-        log(nil, "Perks resetting. Mod version changed.")
-        return
-    end
-    activePerksByID = data.activePerksByID
-end
 
 local function onConsoleCommand(mode, command, selectedObject)
     local function getSuffixForCmd(prefix)
@@ -210,7 +196,7 @@ local function onConsoleCommand(mode, command, selectedObject)
     elseif show ~= nil then
         local remainingPoints = totalAllowedPoints() - currentSpentPoints()
         pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-            { activePerksByID = activePerksByID, remainingPoints = remainingPoints })
+            { remainingPoints = remainingPoints })
     end
 end
 
@@ -220,7 +206,9 @@ local function UiModeChanged(data)
         if shouldShowUI() then
             local remainingPoints = totalAllowedPoints() - currentSpentPoints()
             pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-                { activePerksByID = activePerksByID, remainingPoints = remainingPoints })
+                {
+                    remainingPoints = remainingPoints
+                })
         end
     elseif (data.newMode == nil) then
         pself:sendEvent(settings.MOD_NAME .. "closePerkUI", {})
@@ -236,8 +224,6 @@ return {
     engineHandlers = {
         onUpdate = onUpdate,
         onActive = onActive,
-        onSave = onSave,
-        onLoad = onLoad,
         onConsoleCommand = onConsoleCommand,
     }
 }

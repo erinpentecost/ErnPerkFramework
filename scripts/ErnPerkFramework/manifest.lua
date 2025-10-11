@@ -22,10 +22,15 @@ if require("openmw.core").API_REVISION < 62 then
     error("OpenMW 0.49 or newer is required!")
 end
 
+local version = 1
+
 -- manifest of registered perks. This is a map of ID -> perk record.
 local perkTable = {}
 -- list of all perk IDs.
 local perkIDs = {}
+
+-- table of playerID -> list of perks, in the order they were picked.
+local playerPerks = {}
 
 -- Every requirement must have these fields:
 -- A unique ID. This is used for localization.
@@ -165,13 +170,71 @@ local function requirements()
     return require("scripts.ErnPerkFramework.requirements")
 end
 
+-- getPerksForPlayer returns a list of perk IDs in the order that the player chose them.
+local function getPerksForPlayer(player)
+    if player == nil then
+        error("player can't be nil")
+    end
+    local id = player
+    if player.id ~= nil then
+        id = player.id
+    end
+    if type(id) ~= "string" then
+        error("invalid id type")
+    end
+    if playerPerks[id] == nil then
+        playerPerks[id] = {}
+    end
+    return playerPerks[id]
+end
+
+-- setPerksForPlayer replaces the ordered list of perk IDs that the player chose.
+-- You probably don't want to use this.
+local function setPerksForPlayer(player, perkIDList)
+    if player == nil then
+        error("player can't be nil")
+    end
+    local id = player
+    if player.id ~= nil then
+        id = player.id
+    end
+    if type(id) ~= "string" then
+        error("invalid id type")
+    end
+    playerPerks[id] = perkIDList
+end
+
+local function onSave()
+    return {
+        version = version,
+        playerPerks = playerPerks,
+    }
+end
+
+local function onLoad(data)
+    if (data == nil) then
+        return
+    end
+    if (not data) or (not data.version) or (data.version ~= version) then
+        -- throw all known perks away since version changed.
+        return
+    end
+    playerPerks = data.playerPerks
+end
+
 return {
     interfaceName = MOD_NAME,
     interface = {
-        version = 1,
+        version = version,
         registerPerk = registerPerk,
         getPerks = getPerks,
         getPerkIDs = getPerkIDs,
         requirements = requirements,
+        getPerksForPlayer = getPerksForPlayer,
+        setPerksForPlayer = setPerksForPlayer,
+    },
+    engineHandlers = {
+        onSave = onSave,
+        onLoad = onLoad,
     }
 }

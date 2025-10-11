@@ -17,7 +17,11 @@ hiddenRequirement: "<Requirement Hidden>"
 requirements: "Requirements"
 
 cancelButton: "Cancel"
-pickButton: "Select Perk"
+pickButton: "Select Perk ({cost}/{available})"
+
+costMore: "Costs {amount} Perk Points"
+costFree: "Free"
+costLess: "Grants {amount} Extra Perk Points"
 
 # built-in requirements
 req_minimumLevel: "Level {level}"

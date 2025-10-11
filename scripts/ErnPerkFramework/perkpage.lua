@@ -39,7 +39,6 @@ local localization = core.l10n(MOD_NAME)
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/widgets/widget.html#properties
 -- https://openmw.readthedocs.io/en/stable/reference/lua-scripting/openmw_ui.html##(Template)
 
-local activePerksByID = {}
 local remainingPoints = 0
 
 local menu = nil
@@ -57,15 +56,18 @@ local function getPerkIDs(filterFn, sortFn)
         return true
     end
     local sort = sortFn or function(e)
-        for _, foundID in ipairs(activePerksByID) do
+        for _, foundID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
             if foundID == e then
                 return 100
             end
         end
-        if interfaces.ErnPerkFramework.getPerks()[e]:evaluateRequirements().satisfied then
-            return 0
+        if not interfaces.ErnPerkFramework.getPerks()[e]:evaluateRequirements().satisfied then
+            return 50
         end
-        return 50
+        if interfaces.ErnPerkFramework.getPerks()[e]:cost() > remainingPoints then
+            return 25
+        end
+        return 0
     end
 
     local weights = {}
@@ -100,7 +102,7 @@ end
 
 local function hasPerk(idx)
     local testID = getPerkIDs()[idx]
-    for _, foundID in ipairs(activePerksByID) do
+    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
         if foundID == testID then
             return true
         end
@@ -114,8 +116,12 @@ local function pickPerk()
         log(nil, "Picked perk " .. selectedPerk:id())
         local met = selectedPerk:evaluateRequirements().satisfied
         local hasAlready = hasPerk(getSelectedIndex())
-        if (met == true) and (not hasAlready) then
-            pself:sendEvent(MOD_NAME .. "closePerkUI")
+        local canAfford = selectedPerk:cost() <= remainingPoints
+        if (met == true) and (not hasAlready) and canAfford then
+            remainingPoints = remainingPoints - selectedPerk:cost()
+            if remainingPoints <= 0 then
+                pself:sendEvent(MOD_NAME .. "closePerkUI")
+            end
             log(nil, "Adding perk " .. selectedPerk:id())
             pself:sendEvent(MOD_NAME .. "addPerk",
                 { perkID = selectedPerk:id() })
@@ -129,15 +135,18 @@ local function updatePickButtonElement()
     --pickButtonElement:destroy()
     local color = 'normal'
     local selectedPerk = getSelectedPerk()
+    local cost = 1
     if selectedPerk ~= nil then
+        cost = selectedPerk:cost()
         local hasAlready = hasPerk(getSelectedIndex())
-        if (not selectedPerk:evaluateRequirements().satisfied) or hasAlready then
+        local cantAfford = selectedPerk:cost() > remainingPoints
+        if (not selectedPerk:evaluateRequirements().satisfied) or hasAlready or cantAfford then
             color = 'disabled'
         end
     end
     pickButtonElement.layout = myui.createTextButton(
         pickButtonElement,
-        localization('pickButton'),
+        localization('pickButton', { cost = cost, available = remainingPoints }),
         color,
         'pickButton',
         {},
@@ -333,8 +342,6 @@ local function showPerkUI(data)
     if menu == nil then
         interfaces.UI.setMode('Interface', { windows = {} })
         log(nil, "Showing Perk UI...")
-        log(nil, aux_util.deepToString(data.activePerksByID, 4))
-        activePerksByID = data.activePerksByID
         remainingPoints = data.remainingPoints
 
         perkList.selectedIndex = 1

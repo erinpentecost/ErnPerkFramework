@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
 local perkUtil = require("scripts.ErnPerkFramework.perk")
+local pself = require("openmw.self")
 
 if require("openmw.core").API_REVISION < 62 then
     error("OpenMW 0.49 or newer is required!")
@@ -171,37 +172,14 @@ local function requirements()
 end
 
 -- getPerksForPlayer returns a list of perk IDs in the order that the player chose them.
-local function getPerksForPlayer(player)
-    if player == nil then
-        error("player can't be nil")
-    end
-    local id = player
-    if player.id ~= nil then
-        id = player.id
-    end
-    if type(id) ~= "string" then
-        error("invalid id type")
-    end
-    if playerPerks[id] == nil then
-        playerPerks[id] = {}
-    end
-    return playerPerks[id]
+local function getPlayerPerks()
+    return playerPerks
 end
 
--- setPerksForPlayer replaces the ordered list of perk IDs that the player chose.
+-- setPlayerPerks replaces the ordered list of perk IDs that the player chose.
 -- You probably don't want to use this.
-local function setPerksForPlayer(player, perkIDList)
-    if player == nil then
-        error("player can't be nil")
-    end
-    local id = player
-    if player.id ~= nil then
-        id = player.id
-    end
-    if type(id) ~= "string" then
-        error("invalid id type")
-    end
-    playerPerks[id] = perkIDList
+local function setPlayerPerks(perkIDList)
+    playerPerks = perkIDList
 end
 
 local function onSave()
@@ -230,8 +208,8 @@ return {
         getPerks = getPerks,
         getPerkIDs = getPerkIDs,
         requirements = requirements,
-        getPerksForPlayer = getPerksForPlayer,
-        setPerksForPlayer = setPerksForPlayer,
+        getPlayerPerks = getPlayerPerks,
+        setPlayerPerks = setPlayerPerks,
     },
     engineHandlers = {
         onSave = onSave,

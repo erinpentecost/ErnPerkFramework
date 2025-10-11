@@ -56,7 +56,7 @@ local function getPerkIDs(filterFn, sortFn)
         return true
     end
     local sort = sortFn or function(e)
-        for _, foundID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
+        for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
             if foundID == e then
                 return 100
             end
@@ -102,7 +102,7 @@ end
 
 local function hasPerk(idx)
     local testID = getPerkIDs()[idx]
-    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
+    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
         if foundID == testID then
             return true
         end
@@ -118,13 +118,16 @@ local function pickPerk()
         local hasAlready = hasPerk(getSelectedIndex())
         local canAfford = selectedPerk:cost() <= remainingPoints
         if (met == true) and (not hasAlready) and canAfford then
-            remainingPoints = remainingPoints - selectedPerk:cost()
-            if remainingPoints <= 0 then
-                pself:sendEvent(MOD_NAME .. "closePerkUI")
-            end
             log(nil, "Adding perk " .. selectedPerk:id())
             pself:sendEvent(MOD_NAME .. "addPerk",
                 { perkID = selectedPerk:id() })
+            remainingPoints = remainingPoints - selectedPerk:cost()
+            if remainingPoints <= 0 then
+                pself:sendEvent(MOD_NAME .. "closePerkUI")
+            else
+                pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
+                    { remainingPoints = remainingPoints })
+            end
         end
     end
 end
@@ -347,6 +350,8 @@ local function showPerkUI(data)
         perkList.selectedIndex = 1
 
         menu = ui.create(menuLayout())
+        redraw()
+    else
         redraw()
     end
     log(nil, "showPerkUI end")

@@ -33,14 +33,14 @@ end
 
 local function currentSpentPoints()
     local total = 0
-    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
+    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
         total = total + interfaces.ErnPerkFramework.getPerks()[foundID]:cost()
     end
     return total
 end
 
 local function hasPerk(id)
-    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
+    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
         if foundID == id then
             return true
         end
@@ -63,7 +63,7 @@ local function syncPerks()
     log("syncPerks", "syncPerks() started.")
     -- keep calling this until the number of perks stops going down.
     -- this handles perks that require other perks to exist.
-    local snapshot = interfaces.ErnPerkFramework.getPerksForPlayer(pself)
+    local snapshot = interfaces.ErnPerkFramework.getPlayerPerks()
     local currentCount = #snapshot
     local allowedPoints = totalAllowedPoints()
     for i = 1, 1000 do
@@ -96,8 +96,8 @@ local function syncPerks()
         end
     end
     -- now that we're done removing them, apply them.
-    interfaces.ErnPerkFramework.setPerksForPlayer(pself, snapshot)
-    for _, perkID in ipairs(interfaces.ErnPerkFramework.getPerksForPlayer(pself)) do
+    interfaces.ErnPerkFramework.setPlayerPerks(snapshot)
+    for _, perkID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
         log(nil, "Adding perk " .. perkID .. "!")
         local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
         foundPerk:onAdd()
@@ -142,9 +142,9 @@ local function addPerk(data)
     if foundPerk:evaluateRequirements().satisfied then
         local totalAllowed = totalAllowedPoints()
         if currentSpentPoints() + foundPerk:cost() <= totalAllowed then
-            local activePerksByID = interfaces.ErnPerkFramework.getPerksForPlayer(pself)
+            local activePerksByID = interfaces.ErnPerkFramework.getPlayerPerks()
             table.insert(activePerksByID, data.perkID)
-            interfaces.ErnPerkFramework.setPerksForPlayer(pself, activePerksByID)
+            interfaces.ErnPerkFramework.setPlayerPerks(activePerksByID)
             foundPerk:onAdd()
         else
             log(nil,
@@ -167,14 +167,14 @@ local function removePerk(data)
         error("removePerk(" .. tostring(data.perkID) .. ") called with bad perkID.")
         return
     end
-    local activePerksByID = interfaces.ErnPerkFramework.getPerksForPlayer(pself)
+    local activePerksByID = interfaces.ErnPerkFramework.getPlayerPerks()
     for i, p in ipairs(activePerksByID) do
         if p == data.perkID then
             table.remove(activePerksByID, i)
             break
         end
     end
-    interfaces.ErnPerkFramework.setPerksForPlayer(pself, activePerksByID)
+    interfaces.ErnPerkFramework.setPlayerPerks(activePerksByID)
     foundPerk:onRemove()
 end
 

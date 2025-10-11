@@ -16,26 +16,15 @@ local ambient = require("openmw.ambient")
 local ScrollbarFunctions = {}
 ScrollbarFunctions.__index = ScrollbarFunctions
 
--- renderer is a function takes in an index and returns a UI element.
-function NewScrollbar(count, renderer)
+function NewScrollbar(count, shownCount)
     local new = {
         currentIndex = 1,
         totalCount = count,
-        shownCount = 10,
-        renderer = renderer,
+        shownCount = shownCount or 14,
         scrollbarElement = ui.create {},
-        listElement = ui.create {
-            type = ui.TYPE.Flex,
-            name = "listColumn",
-            props = {
-                horizontal = false,
-                size = v2(300, 600),
-                autoSize = false,
-            },
-            content = ui.content {},
-        }
     }
     setmetatable(new, ScrollbarFunctions)
+    new:BuildElement()
     return new
 end
 
@@ -47,7 +36,7 @@ function ScrollbarFunctions.background(self)
     return self.scrollbarElement.layout.content.background
 end
 
-function ScrollbarFunctions.updateScrollbar(self)
+function ScrollbarFunctions.update(self)
     local totalItems = self.totalCount
     if totalItems <= self.shownCount then
         self:thumb().props.relativeSize = v2(1, 0)
@@ -59,37 +48,6 @@ function ScrollbarFunctions.updateScrollbar(self)
         self:thumb().relativePosition = v2(0, scrollPosition)
     end
     self.scrollbarElement:update()
-end
-
-function ScrollbarFunctions.rebuildList(self, newIndex)
-    --if newIndex == currentIndex then return end
-    print("rebuildList", newIndex, self.currentIndex)
-    if newIndex < self.currentIndex then
-        for i = self.currentIndex - 1, newIndex, -1 do
-            -- delete elements out of view
-            local tempDestroy = self.listElement.layout.content[#self.listElement.layout.content]
-            self.listElement.layout.content[#self.listElement.layout.content] = nil
-            tempDestroy:destroy()
-            -- insert new elements
-            self.listElement.layout.content:insert(1, self.renderer(i))
-        end
-    elseif newIndex > self.currentIndex then
-        for i = self.currentIndex + 1, newIndex do
-            local tempDestroy = self.listElement.layout.content[1]
-            table.remove(self.listElement.layout.content, 1)
-            local buttonIndex = i + self.shownCount
-            self.listElement.layout.content:add(self.renderer(buttonIndex))
-            tempDestroy:destroy()
-        end
-    end
-
-    self.currentIndex = newIndex
-    self.listElement:update()
-    self:updateScrollbar()
-end
-
-function ScrollbarFunctions.Element(self)
-    return self.scrollbarElement
 end
 
 function ScrollbarFunctions.BuildElement(self)
@@ -149,7 +107,7 @@ function ScrollbarFunctions.BuildElement(self)
                 newIndex = math.min(totalItems - self.shownCount, self.currentIndex + pageAmount)
             end
 
-            self:rebuildList(newIndex)
+            --TODO: send event newIndex
         end),
 
         focusGain = async:callback(function(_, elem)
@@ -203,7 +161,7 @@ function ScrollbarFunctions.BuildElement(self)
                 local maxScrollIndex = math.max(1, totalItems - self.shownCount)
                 local newIndex = math.floor(newScrollPosition * (maxScrollIndex - 1) + 0.5) + 1
 
-                self:rebuildList(newIndex)
+                --TODO: send event newIndex
             end
         end),
 

@@ -198,7 +198,7 @@ local function menuLayout()
                             size = util.vector2(800, 480) * settings.uiScale,
                         },
                         content = ui.content {
-                            perkList.containerElement,
+                            perkList.root,
                             myui.padWidget(8, 0),
                             {
                                 -- detail page section
@@ -281,7 +281,8 @@ local function onMouseWheel(direction)
     else
         perkList:scroll(1)
     end
-    perkList:update()
+    selectedPerkIndex = perkList.selectedIndex
+    redraw()
 end
 
 local debounce = 0

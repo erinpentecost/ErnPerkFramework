@@ -42,8 +42,52 @@ function NewList(renderer, props)
             type = ui.TYPE.Flex,
             props = props or { horizontal = false },
             content = ui.content {}
+        },
+        thumbElement = ui.create {
+            type = ui.TYPE.Image,
+            name = 'scrollThumb',
+            props = {
+                resource = ui.texture { path = 'white' },
+                relativePosition = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 0),
+                alpha = 0.4,
+                color = myui.interactiveTextColors.normal.default,
+            },
+        },
+        scrollBGElement = ui.create {
+            {
+                type = ui.TYPE.Image,
+                name = 'scrollBackground',
+                props = {
+                    resource = ui.texture { path = 'white' },
+                    relativePosition = util.vector2(0, 0),
+                    relativeSize = util.vector2(1, 1),
+                    alpha = 0.625,
+                    color = util.color.rgb(0, 0, 0),
+                },
+            },
         }
     }
+    new.root = ui.create {
+        type = ui.TYPE.Flex,
+        props = { horizontal = true },
+        content = ui.content {
+            {
+                type = ui.TYPE.Widget,
+                name = 'scrollbar',
+                props = {
+                    size = util.vector2(20, 0),
+                    relativeSize = util.vector2(0, 1),
+                },
+                content = ui.content {
+                    new.scrollBGElement,
+                    new.thumbElement
+                }
+            },
+            new.containerElement
+        }
+    }
+
     setmetatable(new, ListFunctions)
     return new
 end
@@ -57,6 +101,19 @@ function ListFunctions.destroy(self)
         old:destroy()
     end
     self.containerElement.layout.content = ui.content {}
+end
+
+function ListFunctions.updateScrollbar(self)
+    if self.totalCount <= self.displayCount then
+        self.thumbElement.layout.props.relativeSize = util.vector2(1, 0)
+        self.thumbElement.layout.props.relativePosition = util.vector2(0, 0)
+    else
+        local thumbHeight = self.displayCount / self.totalCount
+        local scrollPosition = (1 - thumbHeight) * (self.topIndex - 1) / (self.totalCount - self.displayCount - 1)
+        self.thumbElement.layout.props.relativeSize = util.vector2(1, thumbHeight)
+        self.thumbElement.layout.props.relativePosition = util.vector2(0, scrollPosition)
+    end
+    self.thumbElement:update()
 end
 
 function ListFunctions.update(self)
@@ -85,6 +142,8 @@ function ListFunctions.update(self)
         table.insert(self.containerElement.layout.content, entryElement)
     end
     self.containerElement:update()
+    self:updateScrollbar()
+    self.root:update()
 end
 
 function ListFunctions.setTotal(self, total)

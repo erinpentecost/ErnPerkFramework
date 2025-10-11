@@ -369,6 +369,9 @@ end
 
 local debounce = 0
 local function onFrame(dt)
+    if menu == nil then
+        return
+    end
     myui.processButtonAction(dt)
 
     if debounce > 0 then

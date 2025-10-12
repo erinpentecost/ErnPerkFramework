@@ -59,7 +59,6 @@ local function satisfied(perkID)
     if satisfiedCache[perkID] ~= nil then
         return satisfiedCache[perkID]
     else
-        print("wargh")
         local ok = interfaces.ErnPerkFramework.getPerks()[perkID]:evaluateRequirements().satisfied
         satisfiedCache[perkID] = ok
         return ok

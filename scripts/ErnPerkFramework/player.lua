@@ -24,7 +24,6 @@ local settings = require("scripts.ErnPerkFramework.settings")
 local UI = require('openmw.interfaces').UI
 
 settings.init()
-local version = interfaces.ErnPerkFramework.version
 
 local function totalAllowedPoints()
     local level = types.Actor.stats.level(pself).current
@@ -60,7 +59,7 @@ local function shouldShowUI()
 end
 
 local function syncPerks()
-    log("syncPerks", "syncPerks() started.")
+    log(nil, "syncPerks() started.")
     -- keep calling this until the number of perks stops going down.
     -- this handles perks that require other perks to exist.
     local snapshot = interfaces.ErnPerkFramework.getPlayerPerks()
@@ -87,6 +86,7 @@ local function syncPerks()
                 log(nil, "Removing perk " .. perkID .. ", don't meet requirements.")
                 foundPerk:onRemove()
             end
+            coroutine.yield()
         end
         snapshot = filteredPerks
 
@@ -102,31 +102,36 @@ local function syncPerks()
         local foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
         foundPerk:onAdd()
     end
+    log(nil, "syncPerks() ended.")
 end
 
-local function onActive()
-    syncPerks()
+local remainingDT = 0
+local syncCoroutine = nil
+local function processSync()
+    if syncCoroutine == nil then
+        syncCoroutine = coroutine.create(syncPerks)
+    end
+    local ok = coroutine.resume(syncCoroutine)
+    if not ok then
+        syncCoroutine = nil
+        remainingDT = 20
+    end
 end
 
--- Detect when we need to add or remove perks
-local remainingDT = 10
 local function onUpdate(dt)
     -- don't call this all the time
     remainingDT = remainingDT - dt
     if remainingDT > 0 then
         return
     end
-    remainingDT = 10
 
     -- don't do anything if we are in the UI.
     if UI.getMode() ~= nil and UI.getMode() ~= "" then
-        remainingDT = 10
         return
     end
 
     -- sync often in case we drop requirements somehow
-    -- TODO: break this up across multiple frames
-    syncPerks()
+    processSync()
 end
 
 local function addPerk(data)
@@ -223,7 +228,6 @@ return {
     },
     engineHandlers = {
         onUpdate = onUpdate,
-        onActive = onActive,
         onConsoleCommand = onConsoleCommand,
     }
 }

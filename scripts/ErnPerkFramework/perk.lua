@@ -19,6 +19,7 @@ local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
 local pself = require("openmw.self")
 local interfaces = require("openmw.interfaces")
 local ui = require('openmw.ui')
+local vfs = require('openmw.vfs')
 local util = require('openmw.util')
 local core = require("openmw.core")
 local localization = core.l10n(MOD_NAME)
@@ -124,9 +125,19 @@ function PerkFunctions.artLayout(self)
     -- These texture dimensions are derived from the Class icon textures.
     -- That way people that don't want to make art can just supply "archer"
     -- or whatever and it will fit.
-    local path = "textures\\perk_placeholder.dds"
+    local path = "textures\\perk_placeholder"
     if self.record.art ~= nil then
-        path = self.record.art()
+        path = resolve(self.record.art)
+    end
+
+    if not vfs.fileExists(path) then
+        for p in vfs.pathsWithPrefix(path) do
+            path = p
+            break
+        end
+    end
+    if not vfs.fileExists(path) then
+        error("can't find path to art for perk " .. tostring(self:id() .. ": " .. path))
     end
 
     local img = {

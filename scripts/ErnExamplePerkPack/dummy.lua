@@ -64,6 +64,7 @@ interfaces.ErnPerkFramework.registerPerk({
     id = ns .. "_dummy_" .. "penalty",
     requirements = {},
     localizedName = "Negative Cost",
+    art = "textures\\levelup\\knight",
     cost = -1,
     localizedDescription = "This perk has a negative cost, so it could be used as a handicap.",
     onAdd = function()
@@ -81,6 +82,7 @@ interfaces.ErnPerkFramework.registerPerk({
     id = ns .. "_dummy_" .. "expensive",
     requirements = {},
     localizedName = "Expensive Cost",
+    art = "textures\\levelup\\healer",
     cost = 2,
     localizedDescription = "This perk costs extra points, so it could be extra powerful.",
     onAdd = function()

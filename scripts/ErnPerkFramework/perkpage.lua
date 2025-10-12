@@ -51,17 +51,30 @@ local perkDetailElement = ui.create {
         anchor = util.vector2(0, 0.5) }]]
 }
 
-local function getPerkIDs(filterFn, sortFn)
-    local filter = filterFn or function(e)
-        return true
+local satisfiedCache = {}
+local function satisfied(perkID)
+    if type(perkID) ~= "string" then
+        perkID = perkID:id()
     end
-    local sort = sortFn or function(e)
+    if satisfiedCache[perkID] ~= nil then
+        return satisfiedCache[perkID]
+    else
+        print("wargh")
+        local ok = interfaces.ErnPerkFramework.getPerks()[perkID]:evaluateRequirements().satisfied
+        satisfiedCache[perkID] = ok
+        return ok
+    end
+end
+
+local weightsCache = {}
+local function getPerkIDs()
+    local sort = function(e)
         for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
             if foundID == e then
                 return 100
             end
         end
-        if not interfaces.ErnPerkFramework.getPerks()[e]:evaluateRequirements().satisfied then
+        if not satisfied(e) then
             return 50
         end
         if interfaces.ErnPerkFramework.getPerks()[e]:cost() > remainingPoints then
@@ -70,17 +83,16 @@ local function getPerkIDs(filterFn, sortFn)
         return 0
     end
 
-    local weights = {}
     local out = {}
     for _, e in ipairs(interfaces.ErnPerkFramework.getPerkIDs()) do
-        if filter(e) then
-            table.insert(out, e)
-            weights[e] = sort(e)
+        table.insert(out, e)
+        if weightsCache[e] == nil then
+            weightsCache[e] = sort(e)
         end
     end
     table.sort(out, function(a, b)
-        if weights[a] ~= weights[b] then
-            return weights[a] < weights[b]
+        if weightsCache[a] ~= weightsCache[b] then
+            return weightsCache[a] < weightsCache[b]
         else
             return interfaces.ErnPerkFramework.getPerks()[a]:name() < interfaces.ErnPerkFramework.getPerks()[b]:name()
         end
@@ -114,7 +126,7 @@ local function pickPerk()
     local selectedPerk = getSelectedPerk()
     if selectedPerk ~= nil then
         log(nil, "Picked perk " .. selectedPerk:id())
-        local met = selectedPerk:evaluateRequirements().satisfied
+        local met = satisfied(selectedPerk)
         local hasAlready = hasPerk(getSelectedIndex())
         local canAfford = selectedPerk:cost() <= remainingPoints
         if (met == true) and (not hasAlready) and canAfford then
@@ -143,7 +155,7 @@ local function updatePickButtonElement()
         cost = selectedPerk:cost()
         local hasAlready = hasPerk(getSelectedIndex())
         local cantAfford = selectedPerk:cost() > remainingPoints
-        if (not selectedPerk:evaluateRequirements().satisfied) or hasAlready or cantAfford then
+        if (not satisfied(selectedPerk)) or hasAlready or cantAfford then
             color = 'disabled'
         end
     end
@@ -196,7 +208,7 @@ local function perkNameElement(perkObj, idx)
         color = 'active'
     elseif hasPerk(idx) then
         color = 'disabled'
-    elseif perkObj:evaluateRequirements().satisfied == false then
+    elseif not satisfied(perkObj) then
         color = 'disabled'
     end
 
@@ -332,6 +344,8 @@ local function redraw()
 end
 
 local function showPerkUI(data)
+    weightsCache = {}
+    satisfiedCache = {}
     local allPerkIDs = getPerkIDs()
     if #allPerkIDs == 0 then
         log(nil, "No perks found.")

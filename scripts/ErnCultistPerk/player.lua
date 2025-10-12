@@ -22,7 +22,7 @@ local interfaces = require("openmw.interfaces")
 local core = require("openmw.core")
 local localization = core.l10n(ns)
 
-local totalRequired = 5
+local totalRequired = 3
 
 local hasPerk = false
 

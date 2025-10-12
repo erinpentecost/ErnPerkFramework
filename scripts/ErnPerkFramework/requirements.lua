@@ -247,6 +247,9 @@ local function andGroup(...)
 end
 
 local function werewolf(status)
+    -- TODO: This is broken because it only checks while transformed.
+    -- test with:
+    -- player->addspell "Werewolf Blood"
     if status then
         return {
             id = builtin .. 'is_a_werewolf',
@@ -266,9 +269,12 @@ local function werewolf(status)
     end
 end
 
+
 local function isVampire()
+    -- test with:
+    -- player->AddSpell "vampire blood aundae"
     for _, spell in pairs(types.Actor.spells(pself)) do
-        if spell.name == "Vampirism" then
+        if spell.id == "vampire attributes" then
             return true
         end
     end
@@ -303,7 +309,6 @@ return {
     minimumSkillLevel = minimumSkillLevel,
     minimumAttributeLevel = minimumAttributeLevel,
     minimumFactionRank = minimumFactionRank,
-    werewolf = werewolf,
     vampire = vampire,
     race = race,
     hasPerk = hasPerk,

@@ -284,7 +284,7 @@ local function menuLayout()
                         props = {
                             horizontal = true,
                             autoSize = false,
-                            size = util.vector2(800, 480) --* settings.uiScale,
+                            size = util.vector2(600, 480) --* settings.uiScale,
                         },
                         content = ui.content {
                             perkList.root,

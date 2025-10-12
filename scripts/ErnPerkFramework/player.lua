@@ -192,16 +192,18 @@ local function onConsoleCommand(mode, command, selectedObject)
             return nil
         end
     end
-    local add = getSuffixForCmd("lua addperk ")
     local show = getSuffixForCmd("lua perks")
+    local respec = getSuffixForCmd("lua perkrespec")
 
-    if add ~= nil then
-        pself:sendEvent(settings.MOD_NAME .. "addPerk",
-            { perkID = add })
-    elseif show ~= nil then
+    if show ~= nil then
+        print("Perk Show Menu")
         local remainingPoints = totalAllowedPoints() - currentSpentPoints()
         pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
             { remainingPoints = remainingPoints })
+    elseif respec ~= nil then
+        print("Perk Respec")
+        interfaces.ErnPerkFramework.setPlayerPerks({})
+        remainingDT = 0
     end
 end
 

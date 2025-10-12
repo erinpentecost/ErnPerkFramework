@@ -24,6 +24,7 @@ local localization = core.l10n(ns)
 
 local totalRequired = 3
 
+-- no need to persist this; the perk will be applied by the framework.
 local hasPerk = false
 
 --[[
@@ -52,7 +53,6 @@ local daedricQuests = {
 }
 
 local function getCompletedQuests()
-    --print("evaluating daedric cultist perk")
     local completedOK = 0
     for id, quest in pairs(types.Player.quests(pself)) do
         if (daedricQuests[id] ~= nil) and (daedricQuests[id] == quest.stage) then

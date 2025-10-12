@@ -375,6 +375,8 @@ local function onMouseWheel(direction)
 end
 
 local debounce = 0
+local keyEnterStatus = false
+local keyEscapeStatus = false
 local function onFrame(dt)
     if menu == nil then
         return
@@ -396,14 +398,19 @@ local function onFrame(dt)
         debounce = 5
         redraw()
     end
-    -- x on playstation is south
+
+    -- x on playstation is south. trigger on falling edge.
     if input.isKeyPressed(input.KEY.Enter) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.A) then
-        debounce = 5
+        keyEnterStatus = true
+    elseif keyEnterStatus == true then
         pickPerk()
+        keyEnterStatus = false
     end
-    -- o on playstation is east
+    -- o on playstation is east. trigger on falling edge.
     if input.isKeyPressed(input.KEY.Escape) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.B) then
-        debounce = 5
+        keyEscapeStatus = true
+    elseif keyEscapeStatus then
+        keyEscapeStatus = false
         closeUI()
     end
 end

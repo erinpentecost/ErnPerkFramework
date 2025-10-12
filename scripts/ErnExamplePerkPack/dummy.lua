@@ -19,8 +19,7 @@ local ns = require("scripts.ErnExamplePerkPack.namespace")
 local interfaces = require("openmw.interfaces")
 local ui = require('openmw.ui')
 
--- Test in-game with console command:
--- lua addperk ErnExamplePerkPack_dummy_1
+-- We're going to make 50 dummy perks with a variety of different requirements.
 for i = 1, 50, 1 do
     local id = ns .. "_dummy_" .. tostring(i)
     local requirements = {}
@@ -64,6 +63,8 @@ for i = 1, 50, 1 do
         )
         )
     elseif i >= 7 or i <= 10 then
+        -- You can make perks require other perks.
+        -- If you end up making a cycle the game will probably crash.
         table.insert(requirements, interfaces.ErnPerkFramework.requirements().hasPerk(ns .. "_dummy_" .. tostring(i - 1)))
     end
 
@@ -73,11 +74,17 @@ for i = 1, 50, 1 do
         localizedName = "Example " .. tostring(i),
         localizedDescription = "perk description " .. tostring(i),
         onAdd = function()
+            -- This function should be idempotent.
+            -- That means the framework should be able to call it multiple times,
+            -- and your function shouldn't have any additional side effect after
+            -- the first time it is called.
             local logLine = id .. " perk added!"
             ui.showMessage(logLine, {})
             print(logLine)
         end,
         onRemove = function()
+            -- This function should clean up after your perk.
+            -- For example, if you applied any magic effects, you would remove them here.
             local logLine = id .. " perk removed!"
             ui.showMessage(logLine, {})
             print(logLine)
@@ -89,9 +96,13 @@ end
 interfaces.ErnPerkFramework.registerPerk({
     id = ns .. "_dummy_" .. "penalty",
     requirements = {},
+    -- You'll want to use localization rather than just relying on a string for this field.
+    -- Try to keep perk names brief since it will mess up the UI if they are too long.
     localizedName = "Negative Cost",
+    -- You can use levelup art if you don't have any textures for your perk.
     art = "textures\\levelup\\knight",
     cost = -1,
+    -- You'll want to use localization rather than just relying on a string for this field.
     localizedDescription = "This perk has a negative cost, so it could be used as a handicap.",
     onAdd = function()
         local logLine = "Negative Cost perk added!"

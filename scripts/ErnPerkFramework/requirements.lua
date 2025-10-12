@@ -24,6 +24,7 @@ local localization = core.l10n(MOD_NAME)
 local pself = require("openmw.self")
 local types = require("openmw.types")
 local builtin = MOD_NAME .. '_builtin_'
+local interfaces = require("openmw.interfaces")
 
 local function resolve(field)
     if type(field) == 'function' then
@@ -149,6 +150,30 @@ local function andList(items)
     return out
 end
 
+-- specify one or more perks by id. if any match, the requirement will be met.
+local function hasPerk(...)
+    local args = { select(1, ...) }
+    return {
+        id = builtin .. 'perk',
+        localizedName = function()
+            local perkNames = {}
+            for _, id in ipairs(args) do
+                table.insert(perkNames, interfaces.ErnPerkFramework.getPerks()[id]:name())
+            end
+            return orList(perkNames)
+        end,
+        check = function()
+            for _, foundPerk in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
+                for _, checkPerk in ipairs(args) do
+                    if checkPerk == foundPerk then
+                        return true
+                    end
+                end
+            end
+            return false
+        end
+    }
+end
 
 -- specify one or more races. if any match, the requirement will be met.
 local function race(...)
@@ -188,11 +213,11 @@ local function orGroup(...)
         end,
         check = function()
             for _, req in ipairs(args) do
-                if not req.check() then
-                    return false
+                if req.check() then
+                    return true
                 end
             end
-            return true
+            return false
         end
     }
 end
@@ -281,6 +306,7 @@ return {
     werewolf = werewolf,
     vampire = vampire,
     race = race,
+    hasPerk = hasPerk,
     orGroup = orGroup,
     andGroup = andGroup,
 }

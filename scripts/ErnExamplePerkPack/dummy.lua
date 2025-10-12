@@ -23,9 +23,12 @@ local ui = require('openmw.ui')
 -- lua addperk ErnExamplePerkPack_dummy_1
 for i = 1, 50, 1 do
     local id = ns .. "_dummy_" .. tostring(i)
-    local requirements = {
-        interfaces.ErnPerkFramework.requirements().minimumLevel(math.floor(i / 3)),
-    }
+    local requirements = {}
+
+    local levelReq = math.floor(i / 5)
+    if levelReq > 0 then
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().minimumLevel(levelReq))
+    end
     if i == 1 then
         table.insert(requirements, interfaces.ErnPerkFramework.requirements().
         minimumFactionRank('thieves guild', 0))
@@ -60,6 +63,8 @@ for i = 1, 50, 1 do
             )
         )
         )
+    elseif i >= 7 or i <= 10 then
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().hasPerk(ns .. "_dummy_" .. tostring(i - 1)))
     end
 
     interfaces.ErnPerkFramework.registerPerk({

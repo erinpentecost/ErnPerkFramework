@@ -23,8 +23,15 @@ local core = require("openmw.core")
 local localization = core.l10n(MOD_NAME)
 local pself = require("openmw.self")
 local types = require("openmw.types")
-
 local builtin = MOD_NAME .. '_builtin_'
+
+local function resolve(field)
+    if type(field) == 'function' then
+        return field()
+    else
+        return field
+    end
+end
 
 local function minimumLevel(level)
     return {
@@ -96,35 +103,123 @@ local function minimumFactionRank(factionID, rank)
     }
 end
 
---[[
--- trash
-local function race(raceID)
-    -- Use the global variable instead of checking records so custom races can get these.
-    -- https://en.uesp.net/wiki/Morrowind_Mod:PCRace
-    local lookup = {
-        [1] = types.NPC.races.records["argonian"],
-        [2] = types.NPC.races.records["breton"],
-        [3] = types.NPC.races.records["dark elf"],
-        [4] = types.NPC.races.records["high elf"],
-        [5] = types.NPC.races.records["imperial"],
-        [6] = types.NPC.races.records["khajiit"],
-        [7] = types.NPC.races.records["nord"],
-        [8] = types.NPC.races.records["orc"],
-        [9] = types.NPC.races.records["redguard"],
-        [10] = types.NPC.races.records["woodelf"],
-    }
-    local pcRaceID = world.mwscript.getGlobalVariables(pself)["PCRace"]
-    local raceRecord = core.stats.Attribute.records[attributeID]
+local function orList(items)
+    local out = ""
+    if #items == 1 then
+        return items[1]
+    end
+
+    for i, item in ipairs(items) do
+        if i == 1 then
+            out = items[1]
+        elseif i == #items then
+            out = localization('list_join_or',
+                { prevList = out, nextItem = item })
+        else
+            out = localization('list_join',
+                { prevList = out, nextItem = item })
+        end
+    end
+
+    return out
+end
+
+local function andList(items)
+    local out = ""
+    if #items == 1 then
+        return items[1]
+    end
+
+    for i, item in ipairs(items) do
+        if i == 1 then
+            out = items[1]
+        elseif i == #items then
+            out = localization('list_join_and',
+                { prevList = out, nextItem = item })
+        else
+            out = localization('list_join',
+                { prevList = out, nextItem = item })
+        end
+    end
+
+    if #items > 1 then
+        out = localization('list_group', { list = out })
+    end
+
+    return out
+end
+
+
+-- specify one or more races. if any match, the requirement will be met.
+local function race(...)
+    local args = { select(1, ...) }
     return {
-        id = builtin .. 'minimumAttributeLevel',
-        localizedName = localization('req_minimumAttributeLevel', { attribute = attributeRecord.name, level = level }),
+        id = builtin .. 'race',
+        localizedName = function()
+            local raceNames = {}
+            for _, id in ipairs(args) do
+                table.insert(raceNames, types.NPC.races.records[id].name)
+            end
+            return orList(raceNames)
+        end,
         check = function()
-            return types.NPC.races.records[raceID]
-            return types.Actor.stats.attributes[attributeID](pself).base >= level
+            local actualRaceID = types.NPC.record(pself).race
+            for _, testRace in ipairs(args) do
+                if testRace == actualRaceID then
+                    return true
+                end
+            end
+            return false
         end
     }
 end
-]]
+
+-- pass in multiple requirements to OR them together.
+local function orGroup(...)
+    local args = { select(1, ...) }
+    return {
+        id = builtin .. 'or',
+        localizedName = function()
+            local reqNames = {}
+            for _, req in ipairs(args) do
+                table.insert(reqNames, resolve(req.localizedName))
+            end
+            return orList(reqNames)
+        end,
+        check = function()
+            for _, req in ipairs(args) do
+                if not req.check() then
+                    return false
+                end
+            end
+            return true
+        end
+    }
+end
+
+-- pass in multiple requirements to AND them together.
+-- You usually don't need to do this, since all top-level requirements are ANDed.
+local function andGroup(...)
+    local args = { select(1, ...) }
+    return {
+        id = builtin .. 'and',
+        localizedName = function()
+            local reqNames = {}
+            for _, req in ipairs(args) do
+                table.insert(reqNames, resolve(req.localizedName))
+            end
+            return andList(reqNames)
+        end,
+        check = function()
+            for _, req in ipairs(args) do
+                if not req.check() then
+                    return false
+                end
+            end
+            return true
+        end
+    }
+end
 
 local function werewolf(status)
     if status then
@@ -185,4 +280,7 @@ return {
     minimumFactionRank = minimumFactionRank,
     werewolf = werewolf,
     vampire = vampire,
+    race = race,
+    orGroup = orGroup,
+    andGroup = andGroup,
 }

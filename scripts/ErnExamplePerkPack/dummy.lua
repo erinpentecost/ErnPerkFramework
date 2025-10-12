@@ -24,7 +24,7 @@ local ui = require('openmw.ui')
 for i = 1, 50, 1 do
     local id = ns .. "_dummy_" .. tostring(i)
     local requirements = {
-        interfaces.ErnPerkFramework.requirements().minimumLevel(i * i),
+        interfaces.ErnPerkFramework.requirements().minimumLevel(math.floor(i / 3)),
     }
     if i == 1 then
         table.insert(requirements, interfaces.ErnPerkFramework.requirements().
@@ -39,6 +39,27 @@ for i = 1, 50, 1 do
     elseif i == 3 then
         table.insert(requirements, interfaces.ErnPerkFramework.requirements().
         minimumAttributeLevel('strength', 50))
+    elseif i == 4 then
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().
+        race("khajiit", "argonian", "dark elf"))
+    elseif i == 5 then
+        -- You can group requirements into OR group arbitrarily
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().
+        orGroup(
+            interfaces.ErnPerkFramework.requirements().minimumSkillLevel('mysticism', 30),
+            interfaces.ErnPerkFramework.requirements().minimumSkillLevel('destruction', 30)
+        )
+        )
+    elseif i == 6 then
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().
+        orGroup(
+            interfaces.ErnPerkFramework.requirements().race('high elf'),
+            interfaces.ErnPerkFramework.requirements().andGroup(
+                interfaces.ErnPerkFramework.requirements().minimumSkillLevel('mysticism', 30),
+                interfaces.ErnPerkFramework.requirements().minimumAttributeLevel('intelligence', 70)
+            )
+        )
+        )
     end
 
     interfaces.ErnPerkFramework.registerPerk({

@@ -19,10 +19,6 @@ requirements: "Requirements"
 cancelButton: "Cancel"
 pickButton: "Select Perk ({cost}/{available})"
 
-costMore: "Costs {amount} Perk Points"
-costFree: "Free"
-costLess: "Grants {amount} Extra Perk Points"
-
 # built-in requirements
 req_minimumLevel: "Level {level}"
 req_minimumSkillLevel: "{skill} {level}"
@@ -32,3 +28,8 @@ req_is_not_a_werewolf: "Not a werewolf"
 req_is_a_vampire: "Vampire"
 req_is_not_a_vampire: "Not a vampire"
 req_minimumFactionRank: "{factionName} {factionRankName}"
+
+list_join: "{prevList}, {nextItem}"
+list_join_or: "{prevList} or {nextItem}"
+list_join_and: "{prevList} and {nextItem}"
+list_group: "({list})"

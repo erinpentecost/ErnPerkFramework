@@ -320,54 +320,8 @@ function PerkFunctions.detailLayout(self)
         }
     }
 
-    local costLayout = {}
-    -- tack on cost info if other than 0
-    -- this is a little messed up because it won't be red if there
-    -- aren't enough points.
-    if self:cost() > 1 then
-        costLayout = {
-            template = interfaces.MWUI.templates.textParagraph,
-            --type = ui.TYPE.Text,
-            alignment = ui.ALIGNMENT.End,
-            props = {
-                textAlignH = ui.ALIGNMENT.Start,
-                textAlignV = ui.ALIGNMENT.Start,
-                text = localization("costMore", { amount = self:cost() }),
-                relativeSize = util.vector2(1, 0),
-                textColor = myui.textColors.negative,
-            },
-        }
-    elseif self:cost() == 0 then
-        costLayout = {
-            template = interfaces.MWUI.templates.textParagraph,
-            --type = ui.TYPE.Text,
-            alignment = ui.ALIGNMENT.End,
-            props = {
-                textAlignH = ui.ALIGNMENT.Start,
-                textAlignV = ui.ALIGNMENT.Start,
-                text = localization("costFree", {}),
-                relativeSize = util.vector2(1, 0),
-                textColor = myui.textColors.positive,
-            },
-        }
-    elseif self:cost() < 0 then
-        costLayout = {
-            template = interfaces.MWUI.templates.textParagraph,
-            --type = ui.TYPE.Text,
-            alignment = ui.ALIGNMENT.End,
-            props = {
-                textAlignH = ui.ALIGNMENT.Start,
-                textAlignV = ui.ALIGNMENT.Start,
-                text = localization("costLess", { amount = -1 * self:cost() }),
-                relativeSize = util.vector2(1, 0),
-                textColor = myui.textColors.positive,
-            },
-        }
-    end
-
     vFlexLayout.content:add(self:artLayout())
     vFlexLayout.content:add(myui.padWidget(0, 4))
-    --vFlexLayout.content:add(costLayout)
     vFlexLayout.content:add(requirementsHeader)
     vFlexLayout.content:add(self:requirementsLayout())
     vFlexLayout.content:add(myui.padWidget(0, 4))

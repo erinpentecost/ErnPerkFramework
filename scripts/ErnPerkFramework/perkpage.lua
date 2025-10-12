@@ -164,7 +164,6 @@ local function viewPerk(perkID, idx)
     if type(idx) ~= "number" then
         error("idx must be a number")
     end
-    log(nil, "viewPerk start")
     local foundPerk = perkID
     if type(perkID) == "string" then
         foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
@@ -180,7 +179,6 @@ local function viewPerk(perkID, idx)
     log(nil, "Showing detail for perk " .. foundPerk:name())
     perkDetailElement.layout = foundPerk:detailLayout()
     perkDetailElement:update()
-    log(nil, "viewPerk end")
     if perkList ~= nil then
         perkList:setSelectedIndex(idx)
         perkList:update()
@@ -191,7 +189,7 @@ end
 
 -- perkNameElement renders a perk button in a list
 local function perkNameElement(perkObj, idx)
-    print("making Element for " .. perkObj:id() .. " at idx " .. idx)
+    --print("making Element for " .. perkObj:id() .. " at idx " .. idx)
     -- this is the perk name as it appears in the selection list.
     local color = 'normal'
     if idx == getSelectedIndex() then
@@ -323,7 +321,6 @@ local function drawPerksList()
 end
 
 local function redraw()
-    log(nil, "redraw start")
     drawPerksList()
     viewPerk(getSelectedPerk(), getSelectedIndex())
 
@@ -332,11 +329,9 @@ local function redraw()
     if menu ~= nil then
         menu:update()
     end
-    log(nil, "redraw end")
 end
 
 local function showPerkUI(data)
-    log(nil, "showPerkUI start")
     local allPerkIDs = getPerkIDs()
     if #allPerkIDs == 0 then
         log(nil, "No perks found.")
@@ -354,7 +349,6 @@ local function showPerkUI(data)
     else
         redraw()
     end
-    log(nil, "showPerkUI end")
 end
 
 
@@ -380,16 +374,24 @@ local function onFrame(dt)
     end
 
     if input.isKeyPressed(input.KEY.DownArrow) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.DPadDown) then
-        log(nil, "Down key")
         perkList:scroll(1)
         debounce = 5
         redraw()
     end
     if input.isKeyPressed(input.KEY.UpArrow) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.DPadUp) then
-        log(nil, "Up key")
         perkList:scroll(-1)
         debounce = 5
         redraw()
+    end
+    -- x on playstation is south
+    if input.isKeyPressed(input.KEY.Enter) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.A) then
+        debounce = 5
+        pickPerk()
+    end
+    -- o on playstation is east
+    if input.isKeyPressed(input.KEY.Escape) or input.isControllerButtonPressed(input.CONTROLLER_BUTTON.B) then
+        debounce = 5
+        closeUI()
     end
 end
 

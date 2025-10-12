@@ -61,6 +61,7 @@ function NewList(renderer, props)
             },
         },
         scrollBGElement = ui.create {
+            -- TODO: I can't get this to actually render.
             {
                 type = ui.TYPE.Image,
                 name = 'scrollBackground',
@@ -69,7 +70,7 @@ function NewList(renderer, props)
                     relativePosition = util.vector2(0, 0),
                     relativeSize = util.vector2(1, 1),
                     alpha = 0.625,
-                    --color = util.color.rgb(0, 0, 0),
+                    color = util.color.rgb(0, 0, 0),
                 },
                 events = {},
             },
@@ -82,7 +83,6 @@ function NewList(renderer, props)
         content = ui.content {
             {
                 type = ui.TYPE.Widget,
-                name = 'scrollbar',
                 props = {
                     size = util.vector2(20, 0),
                     relativeSize = util.vector2(0, 1),
@@ -250,6 +250,7 @@ function ListFunctions.update(self)
         entryElement:update()
         table.insert(self.containerElement.layout.content, entryElement)
     end
+    self.scrollBGElement:update()
     self.containerElement:update()
     self:updateScrollbar()
     self.root:update()

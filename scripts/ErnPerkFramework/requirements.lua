@@ -246,6 +246,19 @@ local function andGroup(...)
     }
 end
 
+-- pass in a requirement to invert it.
+local function invert(someReq)
+    return {
+        id = builtin .. 'not',
+        localizedName = function()
+            return localization('not_req', { req = resolve(someReq.localizedName) })
+        end,
+        check = function()
+            return not someReq.check()
+        end
+    }
+end
+
 local function werewolf(status)
     -- TODO: This is broken because it only checks while transformed.
     -- test with:
@@ -314,4 +327,5 @@ return {
     hasPerk = hasPerk,
     orGroup = orGroup,
     andGroup = andGroup,
+    invert = invert,
 }

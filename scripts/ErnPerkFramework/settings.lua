@@ -24,7 +24,6 @@ local function init()
         key = MOD_NAME,
         l10n = MOD_NAME,
         name = "name",
-        description = "description"
     }
     interfaces.Settings.registerGroup {
         key = "Settings" .. MOD_NAME,

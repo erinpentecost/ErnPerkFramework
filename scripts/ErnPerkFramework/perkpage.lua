@@ -51,6 +51,18 @@ local perkDetailElement = ui.create {
         anchor = util.vector2(0, 0.5) }]]
 }
 
+local haveThisPerk = ui.create {
+    template = interfaces.MWUI.templates.textNormal,
+    type = ui.TYPE.Text,
+    alignment = ui.ALIGNMENT.Center,
+    props = {
+        visible = false,
+        textAlignH = ui.ALIGNMENT.Center,
+        textAlignV = ui.ALIGNMENT.Center,
+        text = localization("havePerk", {}),
+    },
+}
+
 local satisfiedCache = {}
 local function satisfied(perkID)
     if type(perkID) ~= "string" then
@@ -195,6 +207,9 @@ local function viewPerk(perkID, idx)
         perkList:update()
     end
 
+    haveThisPerk.layout.props.visible = hasPerk(getSelectedIndex())
+    haveThisPerk:update()
+
     updatePickButtonElement()
 end
 
@@ -305,16 +320,27 @@ local function menuLayout()
                                         name = 'footer',
                                         type = ui.TYPE.Flex,
                                         props = {
-                                            horizontal = true,
+                                            align = ui.ALIGNMENT.Center,
+                                            arrange = ui.ALIGNMENT.Center,
                                             relativePosition = util.vector2(0.5, 1),
                                             anchor = util.vector2(0.5, 1)
                                         },
                                         content = ui.content {
-                                            pickButtonElement,
-                                            myui.padWidget(8, 0),
-                                            cancelButtonElement
-                                        },
-                                    }
+                                            haveThisPerk,
+                                            myui.padWidget(0, 8),
+                                            {
+                                                type = ui.TYPE.Flex,
+                                                props = {
+                                                    horizontal = true,
+                                                },
+                                                content = ui.content {
+                                                    pickButtonElement,
+                                                    myui.padWidget(8, 0),
+                                                    cancelButtonElement
+                                                },
+                                            }
+                                        }
+                                    },
                                 }
                             }
                         }

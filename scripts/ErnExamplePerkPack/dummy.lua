@@ -24,7 +24,7 @@ for i = 1, 50, 1 do
     local id = ns .. "_dummy_" .. tostring(i)
     local requirements = {}
 
-    local levelReq = math.floor(i / 5)
+    local levelReq = 10 * math.floor(i / 15)
     if levelReq > 0 then
         table.insert(requirements, interfaces.ErnPerkFramework.requirements().minimumLevel(levelReq))
     end
@@ -60,10 +60,25 @@ for i = 1, 50, 1 do
             )
         )
         )
-    elseif i >= 7 or i <= 10 then
+    elseif i >= 7 and i <= 10 then
         -- You can make perks require other perks.
         -- If you end up making a cycle the game will probably crash.
         table.insert(requirements, interfaces.ErnPerkFramework.requirements().hasPerk(ns .. "_dummy_" .. tostring(i - 1)))
+    elseif i == 11 then
+        -- exclusive perk demo
+        table.insert(requirements,
+            interfaces.ErnPerkFramework.requirements().invert(interfaces.ErnPerkFramework.requirements().hasPerk(
+                ns .. "_dummy_" .. tostring(12), ns .. "_dummy_" .. tostring(13))))
+    elseif i == 12 then
+        -- exclusive perk demo
+        table.insert(requirements,
+            interfaces.ErnPerkFramework.requirements().invert(interfaces.ErnPerkFramework.requirements().hasPerk(
+                ns .. "_dummy_" .. tostring(11), ns .. "_dummy_" .. tostring(13))))
+    elseif i == 13 then
+        -- exclusive perk demo
+        table.insert(requirements,
+            interfaces.ErnPerkFramework.requirements().invert(interfaces.ErnPerkFramework.requirements().hasPerk(
+                ns .. "_dummy_" .. tostring(11), ns .. "_dummy_" .. tostring(12))))
     end
 
     interfaces.ErnPerkFramework.registerPerk({

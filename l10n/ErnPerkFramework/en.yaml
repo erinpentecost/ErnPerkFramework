@@ -1,5 +1,4 @@
 name: "ErnPerkFramework"
-description: "Learn spells from Spell Books, which may be Corrupted."
 
 modSettingsTitle: "Mod Options"
 modSettingsDesc: "Change how the mod works."
@@ -18,6 +17,7 @@ requirements: "Requirements"
 
 cancelButton: "Cancel"
 pickButton: "Select Perk ({cost}/{available})"
+havePerk: "You have this perk."
 
 # built-in requirements
 req_minimumLevel: "Level {level}"
@@ -29,6 +29,7 @@ req_is_a_vampire: "Vampire"
 req_is_not_a_vampire: "Not a vampire"
 req_minimumFactionRank: "{factionName} {factionRankName}"
 
+not_req: "Not {req}"
 list_join: "{prevList}, {nextItem}"
 list_join_or: "{prevList} or {nextItem}"
 list_join_and: "{prevList} and {nextItem}"

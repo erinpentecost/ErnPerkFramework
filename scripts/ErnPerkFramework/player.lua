@@ -208,8 +208,12 @@ local function onConsoleCommand(mode, command, selectedObject)
 end
 
 local function UiModeChanged(data)
+    if (data.newMode ~= nil) then
+        return
+    end
+    local hasNCGDMW = interfaces.NCGDMW ~= nil
     -- spawn perk UI after the levelup UI.
-    if (data.newMode == nil) and (data.oldMode == 'LevelUp') then
+    if data.oldMode == 'LevelUp' then
         if shouldShowUI() then
             local remainingPoints = totalAllowedPoints() - currentSpentPoints()
             pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
@@ -217,7 +221,15 @@ local function UiModeChanged(data)
                     remainingPoints = remainingPoints
                 })
         end
-    elseif (data.newMode == nil) then
+    elseif hasNCGDMW and data.oldMode == 'Rest' then
+        if shouldShowUI() then
+            local remainingPoints = totalAllowedPoints() - currentSpentPoints()
+            pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
+                {
+                    remainingPoints = remainingPoints
+                })
+        end
+    else
         pself:sendEvent(settings.MOD_NAME .. "closePerkUI", {})
     end
 end

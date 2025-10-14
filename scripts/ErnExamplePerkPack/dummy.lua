@@ -33,6 +33,8 @@ for i = 1, 50, 1 do
         minimumFactionRank('thieves guild', 0))
         table.insert(requirements, interfaces.ErnPerkFramework.requirements().
         vampire(false))
+        table.insert(requirements, interfaces.ErnPerkFramework.requirements().
+        werewolf(false))
     elseif i == 2 then
         table.insert(requirements, interfaces.ErnPerkFramework.requirements().
         minimumSkillLevel('sneak', 40))

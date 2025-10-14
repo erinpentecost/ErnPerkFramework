@@ -260,15 +260,13 @@ local function invert(someReq)
 end
 
 local function werewolf(status)
-    -- TODO: This is broken because it only checks while transformed.
-    -- test with:
-    -- player->addspell "Werewolf Blood"
+    -- this is busted. the global variable is nil
     if status then
         return {
             id = builtin .. 'is_a_werewolf',
             localizedName = localization('req_is_a_werewolf', {}),
             check = function()
-                return types.Player.isWerewolf(pself)
+                return core.getGMST("PCWerewolf") == 1
             end
         }
     else
@@ -276,7 +274,7 @@ local function werewolf(status)
             id = builtin .. 'is_not_a_werewolf',
             localizedName = localization('req_is_not_a_werewolf', {}),
             check = function()
-                return not types.Player.isWerewolf(pself)
+                return core.getGMST("PCWerewolf") ~= 1
             end
         }
     end

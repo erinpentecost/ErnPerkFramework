@@ -1,9 +1,14 @@
 # ErnPerkFramework
 OpenMW mod that adds a perk framework.
 
-A perk selection window will pop up after your level up window. The perk selection window is controller friendly: hit A to choose the current perk or B to cancel. You can save up your perk points for later. Perks might cost additional points, or might actually give you points (or be free). It all depends on the perk mods you add.
+A perk selection window will pop up after your level up window (for NCGDMW users, the window will pop up after you rest). The window will not pop up if there are no available perks. The perk selection window is controller friendly: hit A to choose the current perk or B to cancel. You can save up your perk points for later. Perks might cost additional points, or might actually give you points (or be free). It all depends on the perk mods you add.
 
-You can adjust the perk points per level in the mod settings. If you no longer meet the requirements for a perk, it will be removed and you will be refunded. If you want to respec, bring up the console and type `lua perkrespec`. If you want to manually bring up the perk window, bring up the console and type `lua perks`.
+## Using the Framework
+
+- You can adjust the perk points per level in the mod settings.
+- If you no longer meet the requirements for a perk, it will be removed and you will be refunded.
+- If you want to respec, bring up the console and type `lua perkrespec`.
+- If you want to manually bring up the perk window, bring up the console and type `lua perks`.
 
 ## Installing
 

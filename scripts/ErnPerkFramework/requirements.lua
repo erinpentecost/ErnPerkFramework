@@ -26,6 +26,8 @@ local types = require("openmw.types")
 local builtin = MOD_NAME .. '_builtin_'
 local interfaces = require("openmw.interfaces")
 
+local mwVarsSnapshot = {}
+
 local function resolve(field)
     if type(field) == 'function' then
         return field()
@@ -260,13 +262,12 @@ local function invert(someReq)
 end
 
 local function werewolf(status)
-    -- this is busted. the global variable is nil
     if status then
         return {
             id = builtin .. 'is_a_werewolf',
             localizedName = localization('req_is_a_werewolf', {}),
             check = function()
-                return core.getGMST("PCWerewolf") == 1
+                return mwVarsSnapshot["PCWerewolf"] == 1
             end
         }
     else
@@ -274,7 +275,7 @@ local function werewolf(status)
             id = builtin .. 'is_not_a_werewolf',
             localizedName = localization('req_is_not_a_werewolf', {}),
             check = function()
-                return core.getGMST("PCWerewolf") ~= 1
+                return mwVarsSnapshot["PCWerewolf"] ~= 1
             end
         }
     end
@@ -312,7 +313,9 @@ local function vampire(status)
     end
 end
 
-
+local function setVars(data)
+    mwVarsSnapshot = data
+end
 
 
 return {
@@ -321,9 +324,11 @@ return {
     minimumAttributeLevel = minimumAttributeLevel,
     minimumFactionRank = minimumFactionRank,
     vampire = vampire,
+    werewolf = werewolf,
     race = race,
     hasPerk = hasPerk,
     orGroup = orGroup,
     andGroup = andGroup,
     invert = invert,
+    _setVars = setVars
 }

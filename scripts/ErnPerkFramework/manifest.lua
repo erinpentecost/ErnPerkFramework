@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
 local perkUtil = require("scripts.ErnPerkFramework.perk")
 local pself = require("openmw.self")
+local reqs = require("scripts.ErnPerkFramework.requirements")
 
 if require("openmw.core").API_REVISION < 62 then
     error("OpenMW 0.49 or newer is required!")
@@ -168,7 +169,7 @@ local function getPerkIDs()
 end
 
 local function requirements()
-    return require("scripts.ErnPerkFramework.requirements")
+    return reqs
 end
 
 -- getPerksForPlayer returns a list of perk IDs in the order that the player chose them.
@@ -180,6 +181,10 @@ end
 -- You probably don't want to use this.
 local function setPlayerPerks(perkIDList)
     playerPerks = perkIDList
+end
+
+local function onUpdateMwVars(vars)
+    reqs._setVars(vars)
 end
 
 local function onSave()
@@ -214,5 +219,8 @@ return {
     engineHandlers = {
         onSave = onSave,
         onLoad = onLoad,
-    }
+    },
+    eventHandlers = {
+        [MOD_NAME .. 'onUpdateMwVars'] = onUpdateMwVars,
+    },
 }

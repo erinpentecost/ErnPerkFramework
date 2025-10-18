@@ -1,3 +1,4 @@
 PLAYER:scripts/ErnPerkFramework/manifest.lua
 PLAYER:scripts/ErnPerkFramework/player.lua
 PLAYER:scripts/ErnPerkFramework/perkpage.lua
+GLOBAL:scripts/ErnPerkFramework/global.lua

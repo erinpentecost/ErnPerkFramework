@@ -29,6 +29,9 @@ local storage = require('openmw.storage')
 
 local mwVars = storage.globalSection(MOD_NAME .. "_mwVars")
 
+--- Resolves a field that might be a literal value or a function that returns a value.
+--- @param field any A literal value or a function.
+--- @return any The value of the field, or the return value of the function.
 local function resolve(field)
     if type(field) == 'function' then
         return field()
@@ -37,6 +40,9 @@ local function resolve(field)
     end
 end
 
+--- Creates a requirement for a minimum player level.
+--- @param level number The required minimum level.
+--- @return table The requirement data table.
 local function minimumLevel(level)
     return {
         id = builtin .. 'minimumLevel',
@@ -47,6 +53,10 @@ local function minimumLevel(level)
     }
 end
 
+--- Creates a requirement for a minimum base skill level.
+--- @param skillID string The ID of the skill (e.g., "Acrobatics").
+--- @param level number The required minimum base skill level.
+--- @return table The requirement data table.
 local function minimumSkillLevel(skillID, level)
     local skillRecord = core.stats.Skill.records[skillID]
     return {
@@ -58,6 +68,10 @@ local function minimumSkillLevel(skillID, level)
     }
 end
 
+--- Creates a requirement for a minimum base attribute level.
+--- @param attributeID string The ID of the attribute (e.g., "Strength").
+--- @param level number The required minimum base attribute level.
+--- @return table The requirement data table.
 local function minimumAttributeLevel(attributeID, level)
     local attributeRecord = core.stats.Attribute.records[attributeID]
     return {
@@ -69,6 +83,11 @@ local function minimumAttributeLevel(attributeID, level)
     }
 end
 
+--- Creates a requirement that checks if an NPC is a member of a faction and meets a minimum rank.
+--- @param npc table The NPC object (usually pself).
+--- @param factionID string The ID of the faction.
+--- @param rank number The required minimum rank (1-indexed, or nil to check for membership only).
+--- @return boolean True if the NPC is a member and meets the rank, false otherwise.
 local function atLeastRank(npc, factionID, rank)
     local inFaction = false
     for _, foundID in pairs(types.NPC.getFactions(npc)) do
@@ -92,7 +111,12 @@ local function atLeastRank(npc, factionID, rank)
     end
 end
 
--- rank 0 is the first rank of a guild (this matches uesp.net)
+--- Creates a requirement for a minimum faction rank.
+--- Rank 0 is the first rank of a guild (to match uesp.net/Morrowind/Factions).
+--- Note: The check function uses 1-based index internally for OpenMW's API.
+--- @param factionID string The ID of the faction.
+--- @param rank number The required minimum rank (0-indexed).
+--- @return table The requirement data table.
 local function minimumFactionRank(factionID, rank)
     local factionRecord = core.factions.records[factionID]
     local factionRankName = factionRecord.ranks[rank + 1].name
@@ -107,6 +131,9 @@ local function minimumFactionRank(factionID, rank)
     }
 end
 
+--- Formats a list of strings into a localized string joined by "or".
+--- @param items table A list of strings.
+--- @return string The combined and localized string.
 local function orList(items)
     local out = ""
     if #items == 1 then
@@ -128,6 +155,9 @@ local function orList(items)
     return out
 end
 
+--- Formats a list of strings into a localized string joined by "and", and groups it.
+--- @param items table A list of strings.
+--- @return string The combined and localized string.
 local function andList(items)
     local out = ""
     if #items == 1 then
@@ -153,7 +183,9 @@ local function andList(items)
     return out
 end
 
--- specify one or more perks by id. if any match, the requirement will be met.
+--- Creates a requirement that is met if the player has *any* of the specified perks.
+--- @param ... string One or more perk IDs.
+--- @return table The requirement data table.
 local function hasPerk(...)
     local args = { select(1, ...) }
     return {
@@ -178,7 +210,9 @@ local function hasPerk(...)
     }
 end
 
--- specify one or more races. if any match, the requirement will be met.
+--- Creates a requirement that is met if the player's race is *any* of the specified races.
+--- @param ... string One or more race IDs.
+--- @return table The requirement data table.
 local function race(...)
     local args = { select(1, ...) }
     return {
@@ -202,7 +236,10 @@ local function race(...)
     }
 end
 
--- pass in multiple requirements to OR them together.
+--- Groups multiple requirements using a logical OR.
+--- The requirement is met if at least one grouped requirement is met.
+--- @param ... table One or more requirement data tables.
+--- @return table The combined OR requirement data table.
 local function orGroup(...)
     local args = { select(1, ...) }
     return {
@@ -225,8 +262,11 @@ local function orGroup(...)
     }
 end
 
--- pass in multiple requirements to AND them together.
--- You usually don't need to do this, since all top-level requirements are ANDed.
+--- Groups multiple requirements using a logical AND.
+--- The requirement is met only if all grouped requirements are met.
+--- (This is typically unnecessary as top-level requirements are already ANDed).
+--- @param ... table One or more requirement data tables.
+--- @return table The combined AND requirement data table.
 local function andGroup(...)
     local args = { select(1, ...) }
     return {
@@ -249,7 +289,10 @@ local function andGroup(...)
     }
 end
 
--- pass in a requirement to invert it.
+--- Inverts a requirement using a logical NOT.
+--- The requirement is met if the wrapped requirement is NOT met.
+--- @param someReq table The requirement data table to invert.
+--- @return table The inverted requirement data table.
 local function invert(someReq)
     return {
         id = builtin .. 'not',
@@ -262,10 +305,17 @@ local function invert(someReq)
     }
 end
 
+--- Reads the value of a global variable from the shared global storage.
+--- @param name string The name of the global variable.
+--- @return any The value of the global variable.
 local function readGlobalVariable(name)
     return mwVars:get(pself.id)[name]
 end
 
+--- Creates a requirement checking for werewolf status.
+--- Checks the global variable "PCWerewolf".
+--- @param status boolean If true, checks if the player is a werewolf (PCWerewolf == 1). If false, checks if they are not.
+--- @return table The requirement data table.
 local function werewolf(status)
     if status then
         return {
@@ -287,6 +337,8 @@ local function werewolf(status)
 end
 
 
+--- Checks if the player is a vampire by checking for the "vampire attributes" spell.
+--- @return boolean True if the player is a vampire, false otherwise.
 local function isVampire()
     -- test with:
     -- player->AddSpell "vampire blood aundae"
@@ -298,6 +350,9 @@ local function isVampire()
     return false
 end
 
+--- Creates a requirement checking for vampire status.
+--- @param status boolean If true, checks if the player is a vampire. If false, checks if they are not.
+--- @return table The requirement data table.
 local function vampire(status)
     if status then
         return {

@@ -19,14 +19,20 @@ local MOD_NAME = "ErnPerkFramework"
 local world = require('openmw.world')
 local storage = require('openmw.storage')
 
-
 local mwVars = storage.globalSection(MOD_NAME .. "_mwVars")
 mwVars:setLifeTime(storage.LIFE_TIME.Temporary)
 
 local function updateMwVars()
     for _, player in ipairs(world.players) do
         local globalVars = world.mwscript.getGlobalVariables(player)
-        mwVars:set(player.id, globalVars)
+        local asTable = {}
+        local count = 0
+        for k, v in pairs(globalVars) do
+            asTable[k] = v
+            count = count + 1
+        end
+        mwVars:set(player.id, asTable)
+        print("Saved " .. tostring(count) .. " variables for player " .. tostring(player.id))
     end
 end
 

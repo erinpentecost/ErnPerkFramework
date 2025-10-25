@@ -26,6 +26,7 @@ local types = require("openmw.types")
 local builtin = MOD_NAME .. '_builtin_'
 local interfaces = require("openmw.interfaces")
 local storage = require('openmw.storage')
+local log = require("scripts.ErnPerkFramework.log")
 
 local mwVars = storage.globalSection(MOD_NAME .. "_mwVars")
 
@@ -309,7 +310,9 @@ end
 --- @param name string The name of the global variable.
 --- @return any The value of the global variable.
 local function readGlobalVariable(name)
-    return mwVars:get(pself.id)[name]
+    local readVal = mwVars:get(pself.id)[name]
+    log(name, "Variable " .. name .. ": " .. tostring(readVal))
+    return readVal
 end
 
 --- Creates a requirement checking for werewolf status.
@@ -322,7 +325,7 @@ local function werewolf(status)
             id = builtin .. 'is_a_werewolf',
             localizedName = localization('req_is_a_werewolf', {}),
             check = function()
-                return readGlobalVariable["PCWerewolf"] == 1
+                return readGlobalVariable("pcwerewolf") == 1
             end
         }
     else
@@ -330,7 +333,7 @@ local function werewolf(status)
             id = builtin .. 'is_not_a_werewolf',
             localizedName = localization('req_is_not_a_werewolf', {}),
             check = function()
-                return readGlobalVariable["PCWerewolf"] ~= 1
+                return readGlobalVariable("pcwerewolf") ~= 1
             end
         }
     end

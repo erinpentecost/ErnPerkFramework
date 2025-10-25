@@ -68,7 +68,8 @@ interfaces.ErnPerkFramework.registerPerk({
         {
             id = ns .. '_completed_daedric_quests',
             localizedName = function()
-                return localization("req_completed_daedric_quests", { done = getCompletedQuests(), total = 5 })
+                return localization("req_completed_daedric_quests",
+                    { done = getCompletedQuests(), total = totalRequired })
             end,
             check = function()
                 return getCompletedQuests() >= totalRequired

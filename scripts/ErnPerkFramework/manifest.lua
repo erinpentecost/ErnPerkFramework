@@ -183,10 +183,6 @@ local function setPlayerPerks(perkIDList)
     playerPerks = perkIDList
 end
 
-local function onUpdateMwVars(vars)
-    reqs._setVars(vars)
-end
-
 local function onSave()
     return {
         version = version,
@@ -219,8 +215,5 @@ return {
     engineHandlers = {
         onSave = onSave,
         onLoad = onLoad,
-    },
-    eventHandlers = {
-        [MOD_NAME .. 'onUpdateMwVars'] = onUpdateMwVars,
-    },
+    }
 }

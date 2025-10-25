@@ -25,8 +25,9 @@ local pself = require("openmw.self")
 local types = require("openmw.types")
 local builtin = MOD_NAME .. '_builtin_'
 local interfaces = require("openmw.interfaces")
+local storage = require('openmw.storage')
 
-local mwVarsSnapshot = {}
+local mwVars = storage.globalSection(MOD_NAME .. "_mwVars")
 
 local function resolve(field)
     if type(field) == 'function' then
@@ -261,13 +262,17 @@ local function invert(someReq)
     }
 end
 
+local function readGlobalVariable(name)
+    return mwVars:get(pself.id)[name]
+end
+
 local function werewolf(status)
     if status then
         return {
             id = builtin .. 'is_a_werewolf',
             localizedName = localization('req_is_a_werewolf', {}),
             check = function()
-                return mwVarsSnapshot["PCWerewolf"] == 1
+                return readGlobalVariable["PCWerewolf"] == 1
             end
         }
     else
@@ -275,7 +280,7 @@ local function werewolf(status)
             id = builtin .. 'is_not_a_werewolf',
             localizedName = localization('req_is_not_a_werewolf', {}),
             check = function()
-                return mwVarsSnapshot["PCWerewolf"] ~= 1
+                return readGlobalVariable["PCWerewolf"] ~= 1
             end
         }
     end
@@ -313,11 +318,6 @@ local function vampire(status)
     end
 end
 
-local function setVars(data)
-    mwVarsSnapshot = data
-end
-
-
 return {
     minimumLevel = minimumLevel,
     minimumSkillLevel = minimumSkillLevel,
@@ -330,5 +330,5 @@ return {
     orGroup = orGroup,
     andGroup = andGroup,
     invert = invert,
-    _setVars = setVars
+    readGlobalVariable = readGlobalVariable,
 }

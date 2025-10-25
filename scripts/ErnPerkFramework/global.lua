@@ -17,30 +17,30 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 local MOD_NAME = "ErnPerkFramework"
 local world = require('openmw.world')
+local storage = require('openmw.storage')
 
-local variablesToTrack = {
-    "PCWerewolf"
-}
+
+local mwVars = storage.globalSection(MOD_NAME .. "_mwVars")
+mwVars:setLifeTime(storage.LIFE_TIME.Temporary)
 
 local function updateMwVars()
     for _, player in ipairs(world.players) do
         local globalVars = world.mwscript.getGlobalVariables(player)
-        local subset = {}
-        for _, varName in ipairs(variablesToTrack) do
-            subset[varName] = globalVars[varName]
-        end
-        player:sendEvent(MOD_NAME .. 'onUpdateMwVars', subset)
+        mwVars:set(player.id, globalVars)
     end
 end
 
-local delta = 10
+local function loadState(saved)
+    updateMwVars()
+end
+
+local delta = 31
 local function onUpdate(dt)
     delta = delta - dt
     if delta > 0 then
         return
     end
-    delta = 10
-
+    delta = 31
     updateMwVars()
 end
 
@@ -48,5 +48,6 @@ return {
     engineHandlers = {
         onPlayerAdded = updateMwVars,
         onUpdate = onUpdate,
+        onLoad = loadState,
     }
 }

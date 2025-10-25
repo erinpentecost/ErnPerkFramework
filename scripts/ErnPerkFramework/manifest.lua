@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
 local perkUtil = require("scripts.ErnPerkFramework.perk")
 local pself = require("openmw.self")
+local reqs = require("scripts.ErnPerkFramework.requirements")
 
 if require("openmw.core").API_REVISION < 62 then
     error("OpenMW 0.49 or newer is required!")
@@ -33,9 +34,11 @@ local perkIDs = {}
 -- table of playerID -> list of perks, in the order they were picked.
 local playerPerks = {}
 
--- Every requirement must have these fields:
--- A unique ID. This is used for localization.
--- A check function that returns true if the requirement is satisfied.
+--- Validates a single requirement data table.
+--- Requirements must have `id` (string) and `check` (function).
+--- `localizedName` (string or function) is optional.
+--- @param requirement table The requirement data to validate.
+--- @return boolean True if valid, false otherwise (errors are thrown on failure).
 local function validateRequirement(requirement)
     if (not requirement) or (type(requirement) ~= "table") then
         error("validateRequirement() argument is not a table.", 3)
@@ -60,11 +63,12 @@ local function validateRequirement(requirement)
     return true
 end
 
--- Perks must have these fields:
--- id, which must be unique.
--- requirements, which is a list of requirements. These are called on the player context.
--- onAdd, which is the function called when a player adds/picks the perk. This is called on the player context. This must be idempotent. This will be called during player Activation.
--- onRemove, which is the function called when the perk is removed through either respec or invalid requirements. This is called on the player context. This must be idempotent. It is possible that onRemove will be called before onAdd.
+--- Registers a new perk into the framework.
+--- Perks must have `id`, `requirements` (table), `onAdd` (function), and `onRemove` (function).
+--- Optional fields: `localizedName`, `localizedDescription`, `art`, `hidden`, `cost`.
+--- If a perk with the same ID already exists, it is replaced.
+--- @param data table The perk record data to register.
+--- @return boolean True upon successful registration.
 local function registerPerk(data)
     if (not data) or (type(data) ~= "table") then
         error("validateRequirement() argument is not a table.", 2)
@@ -157,31 +161,43 @@ local function registerPerk(data)
     end
 
     perkTable[data.id] = perkUtil.NewPerk(data)
+    return true
 end
 
+--- Gets the map of all registered perks (ID -> perk object).
+--- @return table A map of registered perk ID to perk object.
 local function getPerks()
     return perkTable
 end
 
+--- Gets a list of all registered perk IDs.
+--- @return table A list (array) of perk IDs (strings).
 local function getPerkIDs()
     return perkIDs
 end
 
+--- Gets the table of common requirement builder functions.
+--- @return table The requirement builder functions module.
 local function requirements()
-    return require("scripts.ErnPerkFramework.requirements")
+    return reqs
 end
 
--- getPerksForPlayer returns a list of perk IDs in the order that the player chose them.
+--- getPerksForPlayer returns a list of perk IDs in the order that the player chose them.
+--- This list only contains the IDs of the perks the player currently has.
+--- @return table A list (array) of perk IDs (strings).
 local function getPlayerPerks()
     return playerPerks
 end
 
--- setPlayerPerks replaces the ordered list of perk IDs that the player chose.
--- You probably don't want to use this.
+--- setPlayerPerks replaces the ordered list of perk IDs that the player chose.
+--- You probably don't want to use this for general perk manipulation.
+--- @param perkIDList table The new ordered list of perk IDs to set for the player.
 local function setPlayerPerks(perkIDList)
     playerPerks = perkIDList
 end
 
+--- Saves the player's perk state for persistence.
+--- @return table The save data table.
 local function onSave()
     return {
         version = version,
@@ -189,6 +205,9 @@ local function onSave()
     }
 end
 
+--- Loads the player's perk state from saved data.
+--- Clears existing perks if the version changes.
+--- @param data table The loaded save data.
 local function onLoad(data)
     if (data == nil) then
         return

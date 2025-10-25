@@ -28,6 +28,9 @@ local myui = require('scripts.ErnPerkFramework.pcp.myui')
 local PerkFunctions = {}
 PerkFunctions.__index = PerkFunctions
 
+--- Resolves a field that might be a literal value or a function that returns a value.
+--- @param field any A literal value or a function.
+--- @return any The value of the field, or the return value of the function.
 local function resolve(field)
     if type(field) == 'function' then
         return field()
@@ -36,7 +39,10 @@ local function resolve(field)
     end
 end
 
--- NewPerk makes a new perk from a record
+--- NewPerk makes a new perk object from a record data table.
+--- It attaches the PerkFunctions metatable.
+--- @param data table The raw perk record data (must include id, requirements, onAdd, onRemove).
+--- @return table A new perk object.
 function NewPerk(data)
     local new = {
         added = false,
@@ -46,6 +52,9 @@ function NewPerk(data)
     return new
 end
 
+--- Calls the onAdd function defined in the perk record if the perk is not already added.
+--- @param self table The perk object.
+--- @return any The return value of the record's onAdd function.
 function PerkFunctions.onAdd(self)
     if self.added then
         return
@@ -54,6 +63,9 @@ function PerkFunctions.onAdd(self)
     return self.record.onAdd()
 end
 
+--- Calls the onRemove function defined in the perk record if the perk is currently added.
+--- @param self table The perk object.
+--- @return any The return value of the record's onRemove function.
 function PerkFunctions.onRemove(self)
     if not self.added then
         return
@@ -62,6 +74,10 @@ function PerkFunctions.onRemove(self)
     return self.record.onRemove()
 end
 
+--- Gets the localized name of the perk, falling back to the ID.
+--- If `localizedName` in the record is a function, it's called to get the name.
+--- @param self table The perk object.
+--- @return string The perk's name.
 function PerkFunctions.name(self)
     local name = self.record.id
     if self.record.localizedName ~= nil then
@@ -70,10 +86,17 @@ function PerkFunctions.name(self)
     return name
 end
 
+--- Gets the unique identifier (ID) of the perk.
+--- @param self table The perk object.
+--- @return string The perk's ID.
 function PerkFunctions.id(self)
     return self.record.id
 end
 
+--- Gets the cost of the perk, defaulting to 1.
+--- If `cost` in the record is a function, it's called to get the cost.
+--- @param self table The perk object.
+--- @return number The perk's cost, floored to an integer.
 function PerkFunctions.cost(self)
     local cost = 1
     if self.record.cost ~= nil then
@@ -82,6 +105,10 @@ function PerkFunctions.cost(self)
     return math.floor(cost)
 end
 
+--- Gets the localized description of the perk, falling back to a default string.
+--- If `localizedDescription` in the record is a function, it's called to get the description.
+--- @param self table The perk object.
+--- @return string The perk's description.
 function PerkFunctions.description(self)
     local description = self.record.id .. " description"
     if self.record.localizedDescription ~= nil then
@@ -90,11 +117,11 @@ function PerkFunctions.description(self)
     return description
 end
 
--- returns:
--- {
--- requirements={list of requirements info, with fields id, name, satisfied, hidden}
--- satisfied={true if all met}
--- }
+--- Evaluates all requirements for the perk.
+--- @param self table The perk object.
+--- @return table A table with two fields:
+--- * `requirements`: a list of requirement info tables (with fields id, name, satisfied, hidden).
+--- * `satisfied`: a boolean, true if all requirements are met.
 function PerkFunctions.evaluateRequirements(self)
     local reqs = {}
     local allMet = true
@@ -121,6 +148,10 @@ function PerkFunctions.evaluateRequirements(self)
     }
 end
 
+--- Creates the UI layout for the perk's art/icon.
+--- Uses a default placeholder if no art is specified or found.
+--- @param self table The perk object.
+--- @return table The OpenMW UI layout table for the perk art.
 function PerkFunctions.artLayout(self)
     -- These texture dimensions are derived from the Class icon textures.
     -- That way people that don't want to make art can just supply "archer"
@@ -170,6 +201,11 @@ function PerkFunctions.artLayout(self)
     }
 end
 
+--- Creates the UI layout for the perk's requirements list.
+--- Displays localized requirement names, colored red if unsatisfied.
+--- Hidden requirements that are not satisfied are displayed as a generic "hiddenRequirement" string.
+--- @param self table The perk object.
+--- @return table The OpenMW UI layout table for the requirements list.
 function PerkFunctions.requirementsLayout(self)
     local vFlexLayout = {
         name = "vflex",
@@ -243,6 +279,9 @@ function PerkFunctions.requirementsLayout(self)
     return padded
 end
 
+--- Creates the full detail UI layout for the perk, including art, requirements, name, and description.
+--- @param self table The perk object.
+--- @return table The OpenMW UI layout table for the perk details panel.
 function PerkFunctions.detailLayout(self)
     local vFlexLayout = {
         name = "detailLayout",

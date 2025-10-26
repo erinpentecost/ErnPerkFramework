@@ -61,20 +61,17 @@ function NewList(renderer, props)
             },
         },
         scrollBGElement = ui.create {
-            -- TODO: I can't get this to actually render.
-            {
-                type = ui.TYPE.Image,
-                name = 'scrollBackground',
-                props = {
-                    resource = ui.texture { path = 'white' },
-                    relativePosition = util.vector2(0, 0),
-                    relativeSize = util.vector2(1, 1),
-                    alpha = 0.625,
-                    color = util.color.rgb(0, 0, 0),
-                },
-                events = {},
+            type = ui.TYPE.Image,
+            name = 'scrollBackground',
+            props = {
+                resource = ui.texture { path = 'white' },
+                relativePosition = util.vector2(0, 0),
+                relativeSize = util.vector2(1, 1),
+                alpha = 0.625,
+                color = util.color.rgb(0, 0, 0),
             },
-        }
+            events = {},
+        },
     }
     -- set root
     new.root = ui.create {
@@ -179,29 +176,26 @@ end
 function ListFunctions.setScrollBGEvents(self)
     self.scrollBGElement.layout['events'] = {
         mousePress = async:callback(function(data, elem)
-            print("bg mousePress")
             local totalItems = self.totalCount
             if totalItems <= self.displayCount then return end
-            local scrollAmount = math.ceil(self.displayCount / 2)
+            local scrollAmount = math.ceil(self.displayCount / 3)
 
-            local currentThumbY = self.thumbElement.props.relativePosition.y * self:height()
+            local currentThumbY = self.thumbElement.layout.props.relativePosition.y * self:height()
             local clickY = data.offset.y
             if clickY < currentThumbY then
                 self.selectedIndex = self:clamp(math.max(1, self.selectedIndex - scrollAmount))
             else
-                self.selectedIndex = self:clamp(math.min(self.totalCount - self.displayCount,
-                    self.selectedIndex - scrollAmount))
+                self.selectedIndex = self:clamp(math.min(self.totalCount,
+                    self.selectedIndex + scrollAmount))
             end
             self:update()
         end),
         focusGain = async:callback(function(_, elem)
-            print("bg focusGain")
             elem.props.alpha = 0.1
             elem.props.color = myui.interactiveTextColors.normal.default
             self.scrollBGElement:update()
         end),
         focusLoss = async:callback(function(_, elem)
-            print("bg focusLoss")
             elem.props.alpha = 0.625
             elem.props.color = util.color.rgb(0, 0, 0)
             self.scrollBGElement:update()
@@ -221,6 +215,7 @@ function ListFunctions.updateScrollbar(self)
         self.thumbElement.layout.props.relativePosition = util.vector2(0, scrollPosition)
     end
     self.thumbElement:update()
+    self.scrollBGElement:update()
 end
 
 function ListFunctions.update(self)

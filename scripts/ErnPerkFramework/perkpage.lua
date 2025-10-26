@@ -189,6 +189,10 @@ local function viewPerk(perkID, idx)
     end
     local foundPerk = perkID
     if type(perkID) == "string" then
+        if perkID == "" then
+            error("viewPerk() supplied an empty perkID")
+            return
+        end
         foundPerk = interfaces.ErnPerkFramework.getPerks()[perkID]
     end
     if foundPerk == nil then
@@ -392,6 +396,10 @@ end
 
 
 local function onMouseWheel(direction)
+    if menu ~= nil then
+        -- If the menu is not up, ignore the mouse wheel.
+        return
+    end
     if direction < 0 then
         perkList:scroll(-1)
     else

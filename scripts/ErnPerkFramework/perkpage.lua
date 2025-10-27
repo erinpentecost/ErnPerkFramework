@@ -231,7 +231,7 @@ local function perkNameElement(perkObj, idx)
     end
 
     local selectButton = ui.create {}
-    selectButton.layout = myui.createTextButton(
+    selectButton.layout = myui.createTextButtonBorderless(
         selectButton,
         perkObj:name(),
         color,
@@ -396,7 +396,7 @@ end
 
 
 local function onMouseWheel(direction)
-    if menu ~= nil then
+    if menu == nil then
         -- If the menu is not up, ignore the mouse wheel.
         return
     end

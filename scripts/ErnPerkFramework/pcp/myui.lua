@@ -345,62 +345,6 @@ local function createImageButton(parent, name, properties, buttonFunction, args)
     return button
 end
 
---[[
--- Create a text box button to execute a specified function
-local function createTextButton(parent, buttonText, color, name, properties, buttonFunction, args)
-    local buttonColors = interactiveTextColors[color]
-    local buttonLayout = {
-        name = name,
-        type = ui.TYPE.Container,
-        template = templates.boxButton,
-        props = properties,
-        userData = {},
-        content = ui.content {
-            {
-                name = 'vFlex',
-                type = ui.TYPE.Flex,
-                props = {},
-                content = ui.content {
-                    {
-                        name = 'hFlex',
-                        type = ui.TYPE.Flex,
-                        props = {horizontal = true},
-                        content = ui.content {
-                            {
-                                name = 'padding',
-                                props = {size = v2(8,0)}
-                            },
-                            {
-                                name = 'text',
-                                type = ui.TYPE.Text,
-                                template = I.MWUI.templates.textNormal,
-                                props = {text = buttonText, textColor = buttonColors.default}
-                            },
-                            {
-                                name = 'padding',
-                                props = {size = v2(8,0)}
-                            }
-                        }
-                    },
-                    {
-                        name = 'padding',
-                        props = {size = v2(0,1)}
-                    }
-                }
-            }
-        }
-    }
-
-    local button = createButton(parent, buttonLayout,
-    function(layout, state)
-        layout.content.vFlex.content.hFlex.content.text.props.textColor = buttonColors[state]
-    end,
-    buttonFunction, args)
-
-    return button
-end
-]] --
-
 -- Dumb nonsense to get around an OpenMW bug
 local overlayResource = ui.texture { path = 'icons/default icon.dds', size = v2(0, 0) }
 
@@ -463,6 +407,65 @@ local function createTextButton(parent, buttonText, color, name, properties, siz
     return button
 end
 
+-- Create a text box button to execute a specified function
+local function createTextButtonBorderless(parent, buttonText, color, name, properties, size, buttonFunction, args)
+    local buttonColors = interactiveTextColors[color]
+    local buttonLayout = {
+        name = name,
+        type = ui.TYPE.Container,
+        props = properties,
+        userData = {},
+        content = ui.content {
+            {
+                name = 'vFlex',
+                type = ui.TYPE.Flex,
+                props = {},
+                content = ui.content {
+                    {
+                        name = 'hFlex',
+                        type = ui.TYPE.Flex,
+                        props = { horizontal = true },
+                        content = ui.content {
+                            {
+                                name = 'padding',
+                                props = { size = v2(8, 0) }
+                            },
+                            {
+                                name = 'text',
+                                type = ui.TYPE.Text,
+                                template = I.MWUI.templates.textNormal,
+                                props = { text = buttonText, textColor = buttonColors.default }
+                            },
+                            {
+                                name = 'padding',
+                                props = { size = v2(8, 0) }
+                            }
+                        }
+                    },
+                    {
+                        name = 'padding',
+                        props = { size = v2(0, 1) }
+                    }
+                }
+            },
+            {
+                name = 'overlay',
+                type = ui.TYPE.Image,
+                props = { size = size, alpha = 0, resource = overlayResource }
+            }
+        }
+    }
+
+    local button = createButton(parent, buttonLayout,
+        function(layout, state)
+            layout.content.vFlex.content.hFlex.content.text.props.textColor = buttonColors[state]
+        end,
+        buttonFunction, args)
+
+    return button
+end
+
+
 local function disableWidget(layout)
     if layout.userData == nil then
         return
@@ -497,6 +500,7 @@ return {
     interactiveTextColors = interactiveTextColors,
     textColors = textColors,
     createTextButton = createTextButton,
+    createTextButtonBorderless = createTextButtonBorderless,
     createImageButton = createImageButton,
     disableWidget = disableWidget,
     enableWidget = enableWidget,

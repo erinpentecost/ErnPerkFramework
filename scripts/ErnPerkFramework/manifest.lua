@@ -120,6 +120,7 @@ local function registerPerk(data)
         end
     end
     if (data.hidden ~= nil) then
+        -- Hidden perks don't normally appear in the menu.
         if (type(data.hidden) ~= "function") and (type(data.hidden) ~= "boolean") then
             error(
                 "registerPerk(" ..

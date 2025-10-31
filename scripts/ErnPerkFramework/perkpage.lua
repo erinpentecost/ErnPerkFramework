@@ -424,7 +424,8 @@ local function showPerkUI(data)
         local perkObj = interfaces.ErnPerkFramework.getPerks()[id]
         local hasAlready = perkObj:active()
         local cantAfford = perkObj:cost() > remainingPoints
-        if (not hasAlready) and (not cantAfford) then
+        local met = satisfied(id)
+        if (not hasAlready) and (not cantAfford) and met then
             aPerkIsAvailable = true
             break
         end

@@ -417,6 +417,23 @@ local function showPerkUI(data)
         log(nil, "No perks found.")
         return
     end
+
+    -- Also quit if no visible perks are available to us.
+    local aPerkIsAvailable = false
+    for _, id in ipairs(allPerkIDs) do
+        local perkObj = interfaces.ErnPerkFramework.getPerks()[id]
+        local hasAlready = perkObj:active()
+        local cantAfford = perkObj:cost() > remainingPoints
+        if (not hasAlready) and (not cantAfford) then
+            aPerkIsAvailable = true
+            break
+        end
+    end
+    if not aPerkIsAvailable then
+        log(nil, "No available perks found.")
+        return
+    end
+
     if menu == nil then
         interfaces.UI.setMode('Interface', { windows = {} })
         log(nil, "Showing Perk UI...")

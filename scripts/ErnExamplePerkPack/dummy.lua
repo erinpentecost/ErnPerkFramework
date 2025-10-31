@@ -125,7 +125,7 @@ interfaces.ErnPerkFramework.registerPerk({
         print(logLine)
     end,
     onRemove = function()
-        local logLine = "Negative Cost perk added!"
+        local logLine = "Negative Cost perk removed!"
         ui.showMessage(logLine, {})
         print(logLine)
     end,
@@ -143,7 +143,27 @@ interfaces.ErnPerkFramework.registerPerk({
         print(logLine)
     end,
     onRemove = function()
-        local logLine = "Expensive Cost perk added!"
+        local logLine = "Expensive Cost perk removed!"
+        ui.showMessage(logLine, {})
+        print(logLine)
+    end,
+})
+interfaces.ErnPerkFramework.registerPerk({
+    id = ns .. "_dummy_" .. "hidden",
+    requirements = {},
+    localizedName = "Hidden Perk",
+    art = "textures\\levelup\\acrobat",
+    cost = 0,
+    hidden = true,
+    localizedDescription =
+    "This perk is not normally visible in the UI. This can be shown if you do this console command: `lua perks ErnExamplePerkPack_dummy_hidden`",
+    onAdd = function()
+        local logLine = "Hidden perk added!"
+        ui.showMessage(logLine, {})
+        print(logLine)
+    end,
+    onRemove = function()
+        local logLine = "Hidden perk removed!"
         ui.showMessage(logLine, {})
         print(logLine)
     end,

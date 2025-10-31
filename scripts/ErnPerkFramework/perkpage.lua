@@ -46,9 +46,6 @@ local perkList = nil
 local perkDetailElement = ui.create {
     name = "detailLayout",
     type = ui.TYPE.Flex,
-    --[[ props = {
-        relativePosition = util.vector2(0, 0.5),
-        anchor = util.vector2(0, 0.5) }]]
 }
 
 local haveThisPerk = ui.create {
@@ -78,6 +75,7 @@ local function satisfied(perkID)
 end
 
 local weightsCache = {}
+local visiblePerks = nil
 local function getPerkIDs()
     local sort = function(e)
         for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
@@ -94,11 +92,22 @@ local function getPerkIDs()
         return 0
     end
 
+    local visible = function(id)
+        return not interfaces.ErnPerkFramework.getPerks()[id]:hidden()
+    end
+    if visiblePerks ~= nil then
+        visible = function(id)
+            return visiblePerks[id] ~= nil
+        end
+    end
+
     local out = {}
     for _, e in ipairs(interfaces.ErnPerkFramework.getPerkIDs()) do
-        table.insert(out, e)
-        if weightsCache[e] == nil then
-            weightsCache[e] = sort(e)
+        if visible(e) then
+            table.insert(out, e)
+            if weightsCache[e] == nil then
+                weightsCache[e] = sort(e)
+            end
         end
     end
     table.sort(out, function(a, b)
@@ -148,8 +157,17 @@ local function pickPerk()
             if remainingPoints <= 0 then
                 pself:sendEvent(MOD_NAME .. "closePerkUI")
             else
+                -- clone visible perks list
+                local visiblePerksClone = nil
+                if visiblePerks ~= nil then
+                    visiblePerksClone = {}
+                    for k, v in pairs(visiblePerksClone) do
+                        visiblePerksClone[k] = v
+                    end
+                end
+                -- re-open or refresh the current window
                 pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-                    { remainingPoints = remainingPoints })
+                    { remainingPoints = remainingPoints, visiblePerks = visiblePerksClone })
             end
         end
     end
@@ -375,6 +393,26 @@ end
 local function showPerkUI(data)
     weightsCache = {}
     satisfiedCache = {}
+
+    -- Set the filter, if there is one.
+    if data.visiblePerks ~= nil then
+        print("subset")
+        if (type(data.visiblePerks) ~= "table") then
+            error("showPerkUI(): expected visiblePerks to be a list, not a " .. type(data.visiblePerks))
+        end
+        visiblePerks = {}
+        local idListString = ""
+        for _, v in ipairs(data.visiblePerks) do
+            visiblePerks[v] = true
+            idListString = idListString .. ", " .. tostring(v)
+        end
+        log(nil, "Showing explicit subset of perks: " .. idListString)
+    else
+        print("all")
+        visiblePerks = nil
+    end
+
+
     local allPerkIDs = getPerkIDs()
     if #allPerkIDs == 0 then
         log(nil, "No perks found.")

@@ -183,6 +183,13 @@ local function removePerk(data)
     foundPerk:onRemove()
 end
 
+local function splitString(str)
+    local out = {}
+    for item in str:gmatch("([^,%s]+)") do
+        table.insert(out, item)
+    end
+    return out
+end
 
 local function onConsoleCommand(mode, command, selectedObject)
     local function getSuffixForCmd(prefix)
@@ -196,10 +203,14 @@ local function onConsoleCommand(mode, command, selectedObject)
     local respec = getSuffixForCmd("lua perkrespec")
 
     if show ~= nil then
-        print("Perk Show Menu")
+        print("Perk Show Menu: " .. tostring(show))
+        local visible = splitString(show)
+        if #visible == 0 then
+            visible = nil
+        end
         local remainingPoints = totalAllowedPoints() - currentSpentPoints()
         pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-            { remainingPoints = remainingPoints })
+            { remainingPoints = remainingPoints, visiblePerks = visible })
     elseif respec ~= nil then
         print("Perk Respec")
         interfaces.ErnPerkFramework.setPlayerPerks({})

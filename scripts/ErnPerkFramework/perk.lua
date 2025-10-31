@@ -105,6 +105,19 @@ function PerkFunctions.cost(self)
     return math.floor(cost)
 end
 
+--- Determines if the perk should normally appear in the perk window or not.
+--- Defaults to false.
+--- If `hidden` in the record is a function, it's called to get the cost.
+--- @param self table The perk object.
+--- @return number A boolean indicating if the perk should normally be hidden.
+function PerkFunctions.hidden(self)
+    local hide = false
+    if self.record.hidden ~= nil then
+        hide = resolve(self.record.hidden)
+    end
+    return hide
+end
+
 --- Gets the localized description of the perk, falling back to a default string.
 --- If `localizedDescription` in the record is a function, it's called to get the description.
 --- @param self table The perk object.
@@ -115,6 +128,18 @@ function PerkFunctions.description(self)
         description = resolve(self.record.localizedDescription)
     end
     return description
+end
+
+-- Returns true if the player currently has the perk.
+--- @return boolean Whether the player has the perk.
+function PerkFunctions.active(self)
+    -- TODO: maybe cache this
+    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
+        if foundID == self:id() then
+            return true
+        end
+    end
+    return false
 end
 
 --- Evaluates all requirements for the perk.

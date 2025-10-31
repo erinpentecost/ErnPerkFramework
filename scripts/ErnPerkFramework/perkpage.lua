@@ -46,9 +46,6 @@ local perkList = nil
 local perkDetailElement = ui.create {
     name = "detailLayout",
     type = ui.TYPE.Flex,
-    --[[ props = {
-        relativePosition = util.vector2(0, 0.5),
-        anchor = util.vector2(0, 0.5) }]]
 }
 
 local haveThisPerk = ui.create {
@@ -78,27 +75,40 @@ local function satisfied(perkID)
 end
 
 local weightsCache = {}
+-- visiblePerks is a map of perkid -> {}, or nil.
+local visiblePerks = nil
 local function getPerkIDs()
     local sort = function(e)
-        for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
-            if foundID == e then
-                return 100
-            end
+        local perkObj = interfaces.ErnPerkFramework.getPerks()[e]
+        if perkObj:active() then
+            return 100
         end
         if not satisfied(e) then
             return 50
         end
-        if interfaces.ErnPerkFramework.getPerks()[e]:cost() > remainingPoints then
+        if perkObj:cost() > remainingPoints then
             return 25
         end
         return 0
     end
 
+    local visible = function(id)
+        local perkObj = interfaces.ErnPerkFramework.getPerks()[id]
+        return perkObj:active() or (not perkObj:hidden())
+    end
+    if visiblePerks ~= nil then
+        visible = function(id)
+            return visiblePerks[id] ~= nil
+        end
+    end
+
     local out = {}
     for _, e in ipairs(interfaces.ErnPerkFramework.getPerkIDs()) do
-        table.insert(out, e)
-        if weightsCache[e] == nil then
-            weightsCache[e] = sort(e)
+        if visible(e) then
+            table.insert(out, e)
+            if weightsCache[e] == nil then
+                weightsCache[e] = sort(e)
+            end
         end
     end
     table.sort(out, function(a, b)
@@ -148,8 +158,18 @@ local function pickPerk()
             if remainingPoints <= 0 then
                 pself:sendEvent(MOD_NAME .. "closePerkUI")
             else
+                -- clone visible perks list.
+                -- this needs to be converted back into a list.
+                local visiblePerksClone = nil
+                if visiblePerks ~= nil then
+                    visiblePerksClone = {}
+                    for k, v in pairs(visiblePerks) do
+                        table.insert(visiblePerksClone, k)
+                    end
+                end
+                -- re-open or refresh the current window
                 pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-                    { remainingPoints = remainingPoints })
+                    { remainingPoints = remainingPoints, visiblePerks = visiblePerksClone })
             end
         end
     end
@@ -375,11 +395,46 @@ end
 local function showPerkUI(data)
     weightsCache = {}
     satisfiedCache = {}
+
+    -- Set the filter, if there is one.
+    if data.visiblePerks ~= nil then
+        if (type(data.visiblePerks) ~= "table") then
+            error("showPerkUI(): expected visiblePerks to be a list, not a " .. type(data.visiblePerks))
+        end
+        visiblePerks = {}
+        local idListString = ""
+        for _, v in ipairs(data.visiblePerks) do
+            visiblePerks[v] = true
+            idListString = idListString .. ", " .. tostring(v)
+        end
+        log(nil, "Showing explicit subset of perks: " .. idListString)
+    else
+        visiblePerks = nil
+    end
+
     local allPerkIDs = getPerkIDs()
     if #allPerkIDs == 0 then
         log(nil, "No perks found.")
         return
     end
+
+    -- Also quit if no visible perks are available to us.
+    local aPerkIsAvailable = false
+    for _, id in ipairs(allPerkIDs) do
+        local perkObj = interfaces.ErnPerkFramework.getPerks()[id]
+        local hasAlready = perkObj:active()
+        local cantAfford = perkObj:cost() > remainingPoints
+        local met = satisfied(id)
+        if (not hasAlready) and (not cantAfford) and met then
+            aPerkIsAvailable = true
+            break
+        end
+    end
+    if not aPerkIsAvailable then
+        log(nil, "No available perks found.")
+        return
+    end
+
     if menu == nil then
         interfaces.UI.setMode('Interface', { windows = {} })
         log(nil, "Showing Perk UI...")

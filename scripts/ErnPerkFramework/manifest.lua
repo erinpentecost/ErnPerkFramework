@@ -31,7 +31,7 @@ local perkTable = {}
 -- list of all perk IDs.
 local perkIDs = {}
 
--- table of playerID -> list of perks, in the order they were picked.
+-- list of perks, in the order they were picked.
 local playerPerks = {}
 
 --- Validates a single requirement data table.

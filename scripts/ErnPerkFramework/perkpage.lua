@@ -75,25 +75,26 @@ local function satisfied(perkID)
 end
 
 local weightsCache = {}
+-- visiblePerks is a map of perkid -> {}, or nil.
 local visiblePerks = nil
 local function getPerkIDs()
     local sort = function(e)
-        for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
-            if foundID == e then
-                return 100
-            end
+        local perkObj = interfaces.ErnPerkFramework.getPerks()[e]
+        if perkObj:active() then
+            return 100
         end
         if not satisfied(e) then
             return 50
         end
-        if interfaces.ErnPerkFramework.getPerks()[e]:cost() > remainingPoints then
+        if perkObj:cost() > remainingPoints then
             return 25
         end
         return 0
     end
 
     local visible = function(id)
-        return not interfaces.ErnPerkFramework.getPerks()[id]:hidden()
+        local perkObj = interfaces.ErnPerkFramework.getPerks()[id]
+        return perkObj:active() or (not perkObj:hidden())
     end
     if visiblePerks ~= nil then
         visible = function(id)
@@ -157,12 +158,13 @@ local function pickPerk()
             if remainingPoints <= 0 then
                 pself:sendEvent(MOD_NAME .. "closePerkUI")
             else
-                -- clone visible perks list
+                -- clone visible perks list.
+                -- this needs to be converted back into a list.
                 local visiblePerksClone = nil
                 if visiblePerks ~= nil then
                     visiblePerksClone = {}
-                    for k, v in pairs(visiblePerksClone) do
-                        visiblePerksClone[k] = v
+                    for k, v in pairs(visiblePerks) do
+                        table.insert(visiblePerksClone, k)
                     end
                 end
                 -- re-open or refresh the current window
@@ -396,7 +398,6 @@ local function showPerkUI(data)
 
     -- Set the filter, if there is one.
     if data.visiblePerks ~= nil then
-        print("subset")
         if (type(data.visiblePerks) ~= "table") then
             error("showPerkUI(): expected visiblePerks to be a list, not a " .. type(data.visiblePerks))
         end
@@ -408,10 +409,8 @@ local function showPerkUI(data)
         end
         log(nil, "Showing explicit subset of perks: " .. idListString)
     else
-        print("all")
         visiblePerks = nil
     end
-
 
     local allPerkIDs = getPerkIDs()
     if #allPerkIDs == 0 then

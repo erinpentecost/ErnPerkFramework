@@ -130,6 +130,18 @@ function PerkFunctions.description(self)
     return description
 end
 
+-- Returns true if the player currently has the perk.
+--- @return boolean Whether the player has the perk.
+function PerkFunctions.active(self)
+    -- TODO: maybe cache this
+    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
+        if foundID == self:id() then
+            return true
+        end
+    end
+    return false
+end
+
 --- Evaluates all requirements for the perk.
 --- @param self table The perk object.
 --- @return table A table with two fields:

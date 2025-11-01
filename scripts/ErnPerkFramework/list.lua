@@ -76,10 +76,12 @@ function NewList(renderer, props)
     -- set root
     new.root = ui.create {
         type = ui.TYPE.Flex,
+        template = interfaces.MWUI.templates.borders,
         props = { horizontal = true },
         content = ui.content {
             {
                 type = ui.TYPE.Widget,
+                template = interfaces.MWUI.templates.borders,
                 props = {
                     size = util.vector2(20, 0),
                     relativeSize = util.vector2(0, 1),
@@ -210,7 +212,7 @@ function ListFunctions.updateScrollbar(self)
         self.thumbElement.layout.props.relativePosition = util.vector2(0, 0)
     else
         local thumbHeight = self.displayCount / self.totalCount
-        local scrollPosition = (1 - thumbHeight) * (self.topIndex - 1) / (self.totalCount - self.displayCount - 1)
+        local scrollPosition = (1 - thumbHeight) * (self.topIndex - 1) / (self.totalCount - self.displayCount)
         self.thumbElement.layout.props.relativeSize = util.vector2(1, thumbHeight)
         self.thumbElement.layout.props.relativePosition = util.vector2(0, scrollPosition)
     end

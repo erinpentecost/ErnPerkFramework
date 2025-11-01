@@ -196,10 +196,8 @@ local function onConsoleCommand(mode, command, selectedObject)
         if #visible == 0 then
             visible = nil
         end
-        local remainingPoints = interfaces.ErnPerkFramework.totalAllowedPoints() -
-            interfaces.ErnPerkFramework.currentSpentPoints()
         pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-            { remainingPoints = remainingPoints, visiblePerks = visible })
+            { visiblePerks = visible })
     elseif respec ~= nil then
         print("Perk Respec")
         interfaces.ErnPerkFramework.setPlayerPerks({})

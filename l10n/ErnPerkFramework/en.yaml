@@ -1,5 +1,7 @@
 name: "ErnPerkFramework"
 
+perks: "Perks"
+
 modSettingsTitle: "Mod Options"
 modSettingsDesc: "Change how the mod works."
 

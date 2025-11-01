@@ -25,19 +25,6 @@ local UI = require('openmw.interfaces').UI
 
 settings.init()
 
-local function totalAllowedPoints()
-    local level = types.Actor.stats.level(pself).current
-    return math.floor(settings.perksPerLevel * level)
-end
-
-local function currentSpentPoints()
-    local total = 0
-    for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
-        total = total + interfaces.ErnPerkFramework.getPerks()[foundID]:cost()
-    end
-    return total
-end
-
 local function hasPerk(id)
     for _, foundID in ipairs(interfaces.ErnPerkFramework.getPlayerPerks()) do
         if foundID == id then
@@ -48,7 +35,8 @@ local function hasPerk(id)
 end
 
 local function shouldShowUI()
-    local remainingPoints = totalAllowedPoints() - currentSpentPoints()
+    local remainingPoints = interfaces.ErnPerkFramework.totalAllowedPoints() -
+        interfaces.ErnPerkFramework.currentSpentPoints()
     -- now we have to see if there is at least one perk that we could buy
     for id, perk in pairs(interfaces.ErnPerkFramework.getPerks()) do
         if (not hasPerk(id)) and perk:evaluateRequirements().satisfied and perk:cost() <= remainingPoints then
@@ -64,7 +52,7 @@ local function syncPerks()
     -- this handles perks that require other perks to exist.
     local snapshot = interfaces.ErnPerkFramework.getPlayerPerks()
     local currentCount = #snapshot
-    local allowedPoints = totalAllowedPoints()
+    local allowedPoints = interfaces.ErnPerkFramework.totalAllowedPoints()
     for i = 1, 1000 do
         local currentPerksTotalCost = 0
         local filteredPerks = {}
@@ -145,8 +133,8 @@ local function addPerk(data)
         return
     end
     if foundPerk:evaluateRequirements().satisfied then
-        local totalAllowed = totalAllowedPoints()
-        if currentSpentPoints() + foundPerk:cost() <= totalAllowed then
+        local totalAllowed = interfaces.ErnPerkFramework.totalAllowedPoints()
+        if interfaces.ErnPerkFramework.currentSpentPoints() + foundPerk:cost() <= totalAllowed then
             local activePerksByID = interfaces.ErnPerkFramework.getPlayerPerks()
             table.insert(activePerksByID, data.perkID)
             interfaces.ErnPerkFramework.setPlayerPerks(activePerksByID)
@@ -208,7 +196,8 @@ local function onConsoleCommand(mode, command, selectedObject)
         if #visible == 0 then
             visible = nil
         end
-        local remainingPoints = totalAllowedPoints() - currentSpentPoints()
+        local remainingPoints = interfaces.ErnPerkFramework.totalAllowedPoints() -
+            interfaces.ErnPerkFramework.currentSpentPoints()
         pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
             { remainingPoints = remainingPoints, visiblePerks = visible })
     elseif respec ~= nil then
@@ -226,19 +215,11 @@ local function UiModeChanged(data)
     -- spawn perk UI after the levelup UI.
     if data.oldMode == 'LevelUp' then
         if shouldShowUI() then
-            local remainingPoints = totalAllowedPoints() - currentSpentPoints()
-            pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-                {
-                    remainingPoints = remainingPoints
-                })
+            pself:sendEvent(settings.MOD_NAME .. "showPerkUI", {})
         end
     elseif hasNCGDMW and data.oldMode == 'Rest' then
         if shouldShowUI() then
-            local remainingPoints = totalAllowedPoints() - currentSpentPoints()
-            pself:sendEvent(settings.MOD_NAME .. "showPerkUI",
-                {
-                    remainingPoints = remainingPoints
-                })
+            pself:sendEvent(settings.MOD_NAME .. "showPerkUI", {})
         end
     else
         pself:sendEvent(settings.MOD_NAME .. "closePerkUI", {})

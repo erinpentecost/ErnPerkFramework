@@ -317,8 +317,12 @@ local function menuLayout()
         type = ui.TYPE.Container,
         template = interfaces.MWUI.templates.boxTransparentThick,
         props = {
-            anchor = util.vector2(0.5, 0.5),
+            horizontal = true,
+            autoSize = false,
+
             relativePosition = util.vector2(0.5, 0.5),
+            anchor = util.vector2(0.5, 0.5)
+            --relativeSize = util.vector2(1, 1) --* settings.uiScale,
         },
         content = ui.content {
             {
@@ -332,7 +336,7 @@ local function menuLayout()
                         props = {
                             horizontal = true,
                             autoSize = false,
-                            size = util.vector2(600, 480) --* settings.uiScale,
+                            size = util.vector2(600, 480),
                         },
                         content = ui.content {
                             perkList.root,
@@ -392,6 +396,9 @@ local function showPerkUI(data)
     weightsCache = {}
     satisfiedCache = {}
 
+    remainingPoints = interfaces.ErnPerkFramework.totalAllowedPoints() -
+        interfaces.ErnPerkFramework.currentSpentPoints()
+
     -- Set the filter, if there is one.
     if data.visiblePerks ~= nil then
         if (type(data.visiblePerks) ~= "table") then
@@ -432,10 +439,8 @@ local function showPerkUI(data)
     if menu == nil then
         interfaces.UI.setMode('Interface', { windows = {} })
         log(nil, "Showing Perk UI...")
-        remainingPoints = data.remainingPoints
 
         perkList.selectedIndex = 1
-
         menu = ui.create(menuLayout())
         redraw()
     else

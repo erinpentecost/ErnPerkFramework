@@ -143,14 +143,25 @@ local function hasPerk(idx)
     return false
 end
 
+-- perkAvailable returns true if the player does not have the perk, but
+-- they could learn it.
+local function perkAvailable(perk)
+    if perk == nil then
+        log(nil, "perkAvailable(nil)")
+        return false
+    end
+    local foundPerk = perk
+    if type(perk) == "string" then
+        foundPerk = interfaces.ErnPerkFramework.getPerks()[perk]
+    end
+    return satisfied(foundPerk) and (not foundPerk:active()) and foundPerk:cost() <= remainingPoints
+end
+
 local function pickPerk()
     local selectedPerk = getSelectedPerk()
     if selectedPerk ~= nil then
         log(nil, "Picked perk " .. selectedPerk:id())
-        local met = satisfied(selectedPerk)
-        local hasAlready = hasPerk(getSelectedIndex())
-        local canAfford = selectedPerk:cost() <= remainingPoints
-        if (met == true) and (not hasAlready) and canAfford then
+        if perkAvailable(selectedPerk) then
             log(nil, "Adding perk " .. selectedPerk:id())
             pself:sendEvent(MOD_NAME .. "addPerk",
                 { perkID = selectedPerk:id() })
@@ -180,15 +191,13 @@ local pickButtonElement = ui.create {}
 local function updatePickButtonElement()
     --pickButtonElement:destroy()
     local color = 'normal'
-    local selectedPerk = getSelectedPerk()
     local cost = 1
+    local selectedPerk = getSelectedPerk()
     if selectedPerk ~= nil then
         cost = selectedPerk:cost()
-        local hasAlready = hasPerk(getSelectedIndex())
-        local cantAfford = selectedPerk:cost() > remainingPoints
-        if (not satisfied(selectedPerk)) or hasAlready or cantAfford then
-            color = 'disabled'
-        end
+    end
+    if not perkAvailable(selectedPerk) then
+        color = 'disabled'
     end
     pickButtonElement.layout = myui.createTextButton(
         pickButtonElement,
@@ -418,21 +427,19 @@ local function showPerkUI(data)
         return
     end
 
-    -- Also quit if no visible perks are available to us.
-    local aPerkIsAvailable = false
-    for _, id in ipairs(allPerkIDs) do
-        local perkObj = interfaces.ErnPerkFramework.getPerks()[id]
-        local hasAlready = perkObj:active()
-        local cantAfford = perkObj:cost() > remainingPoints
-        local met = satisfied(id)
-        if (not hasAlready) and (not cantAfford) and met then
-            aPerkIsAvailable = true
-            break
+    -- Quit if this is the normal window and nothing is available.
+    if visiblePerks == nil then
+        local aPerkIsAvailable = false
+        for _, id in ipairs(allPerkIDs) do
+            if perkAvailable(id) then
+                aPerkIsAvailable = true
+                break
+            end
         end
-    end
-    if not aPerkIsAvailable then
-        log(nil, "No available perks found.")
-        return
+        if not aPerkIsAvailable then
+            log(nil, "No available perks found.")
+            return
+        end
     end
 
     if menu == nil then

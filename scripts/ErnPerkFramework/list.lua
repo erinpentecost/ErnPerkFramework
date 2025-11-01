@@ -35,7 +35,7 @@ function NewList(renderer, props)
     local new = {
         topIndex = 1,
         selectedIndex = 1,
-        displayCount = 14,
+        displayCount = 16,
         totalCount = 1,
         renderer = renderer,
         containerElement = ui.create {
@@ -232,13 +232,13 @@ function ListFunctions.update(self)
     -- if selectedIndex is outside our window, adjust the window.
     if self.selectedIndex < self.topIndex then
         self.topIndex = self.selectedIndex
-    elseif self.selectedIndex > self.topIndex + self.displayCount then
-        self.topIndex = self:clamp(self.selectedIndex - self.displayCount)
+    elseif self.selectedIndex > self.topIndex + self.displayCount - 1 then
+        self.topIndex = self:clamp(self.selectedIndex - self.displayCount + 1)
     end
 
     -- make element items and insert them.
     -- we can show fewer items if the total count is less than display count
-    for i = self.topIndex, self.topIndex + math.min(self.displayCount, self.totalCount) do
+    for i = self.topIndex, self.topIndex + math.min(self.displayCount, self.totalCount) - 1 do
         local modI = self:clamp(i)
         local entryElement = self.renderer(modI, modI == self.selectedIndex)
         entryElement.layout['external'] = { grow = 1 }

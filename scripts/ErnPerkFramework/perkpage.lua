@@ -339,41 +339,28 @@ local function menuLayout()
                             myui.padWidget(8, 0),
                             {
                                 -- detail page section
-                                type = ui.TYPE.Widget,
+                                type = ui.TYPE.Flex,
                                 props = {
                                     arrange = ui.ALIGNMENT.Center,
                                     relativeSize = util.vector2(1, 1),
-                                    --relativePosition = util.vector2(0.5, 0),
                                 },
                                 external = { grow = 1 },
                                 content = ui.content {
                                     perkDetailElement,
-                                    --myui.padWidget(0, 8),
+                                    myui.padWidget(0, 8),
+                                    haveThisPerk,
+                                    myui.padWidget(0, 8),
                                     {
-                                        name = 'footer',
                                         type = ui.TYPE.Flex,
                                         props = {
-                                            align = ui.ALIGNMENT.Center,
-                                            arrange = ui.ALIGNMENT.Center,
-                                            relativePosition = util.vector2(0.5, 1),
-                                            anchor = util.vector2(0.5, 1)
+                                            horizontal = true,
                                         },
                                         content = ui.content {
-                                            haveThisPerk,
-                                            myui.padWidget(0, 8),
-                                            {
-                                                type = ui.TYPE.Flex,
-                                                props = {
-                                                    horizontal = true,
-                                                },
-                                                content = ui.content {
-                                                    pickButtonElement,
-                                                    myui.padWidget(8, 0),
-                                                    cancelButtonElement
-                                                },
-                                            }
-                                        }
-                                    },
+                                            pickButtonElement,
+                                            myui.padWidget(8, 0),
+                                            cancelButtonElement
+                                        },
+                                    }
                                 }
                             }
                         }

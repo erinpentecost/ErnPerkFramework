@@ -199,6 +199,7 @@ function PerkFunctions.artLayout(self)
     local img = {
         type = ui.TYPE.Image,
         alignment = ui.ALIGNMENT.Center,
+        template = interfaces.MWUI.templates.borders,
         props = {
             resource = ui.texture {
                 path = path

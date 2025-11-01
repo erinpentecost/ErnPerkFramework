@@ -19,6 +19,8 @@ local MOD_NAME = require("scripts.ErnPerkFramework.settings").MOD_NAME
 local perkUtil = require("scripts.ErnPerkFramework.perk")
 local pself = require("openmw.self")
 local reqs = require("scripts.ErnPerkFramework.requirements")
+local types = require("openmw.types")
+local settings = require("scripts.ErnPerkFramework.settings")
 
 if require("openmw.core").API_REVISION < 62 then
     error("OpenMW 0.49 or newer is required!")
@@ -197,6 +199,22 @@ local function setPlayerPerks(perkIDList)
     playerPerks = perkIDList
 end
 
+--- totalAllowedPoints returns how many total perk points a player has.
+--- This value includes spent and unspent points.
+local function totalAllowedPoints()
+    local level = types.Actor.stats.level(pself).current
+    return math.floor(settings.perksPerLevel * level)
+end
+
+--- currentSpentPoints returns how many perk points have been allocated.
+local function currentSpentPoints()
+    local total = 0
+    for _, foundID in ipairs(getPlayerPerks()) do
+        total = total + getPerks()[foundID]:cost()
+    end
+    return total
+end
+
 --- Saves the player's perk state for persistence.
 --- @return table The save data table.
 local function onSave()
@@ -218,6 +236,9 @@ local function onLoad(data)
         return
     end
     playerPerks = data.playerPerks
+    for _, p in ipairs(playerPerks) do
+        print("Active Perk: " .. p)
+    end
 end
 
 return {
@@ -230,6 +251,8 @@ return {
         requirements = requirements,
         getPlayerPerks = getPlayerPerks,
         setPlayerPerks = setPlayerPerks,
+        currentSpentPoints = currentSpentPoints,
+        totalAllowedPoints = totalAllowedPoints,
     },
     engineHandlers = {
         onSave = onSave,

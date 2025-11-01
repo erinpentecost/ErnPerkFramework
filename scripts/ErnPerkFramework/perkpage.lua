@@ -143,14 +143,25 @@ local function hasPerk(idx)
     return false
 end
 
+-- perkAvailable returns true if the player does not have the perk, but
+-- they could learn it.
+local function perkAvailable(perk)
+    if perk == nil then
+        log(nil, "perkAvailable(nil)")
+        return false
+    end
+    local foundPerk = perk
+    if type(perk) == "string" then
+        foundPerk = interfaces.ErnPerkFramework.getPerks()[perk]
+    end
+    return satisfied(foundPerk) and (not foundPerk:active()) and foundPerk:cost() <= remainingPoints
+end
+
 local function pickPerk()
     local selectedPerk = getSelectedPerk()
     if selectedPerk ~= nil then
         log(nil, "Picked perk " .. selectedPerk:id())
-        local met = satisfied(selectedPerk)
-        local hasAlready = hasPerk(getSelectedIndex())
-        local canAfford = selectedPerk:cost() <= remainingPoints
-        if (met == true) and (not hasAlready) and canAfford then
+        if perkAvailable(selectedPerk) then
             log(nil, "Adding perk " .. selectedPerk:id())
             pself:sendEvent(MOD_NAME .. "addPerk",
                 { perkID = selectedPerk:id() })
@@ -180,15 +191,13 @@ local pickButtonElement = ui.create {}
 local function updatePickButtonElement()
     --pickButtonElement:destroy()
     local color = 'normal'
-    local selectedPerk = getSelectedPerk()
     local cost = 1
+    local selectedPerk = getSelectedPerk()
     if selectedPerk ~= nil then
         cost = selectedPerk:cost()
-        local hasAlready = hasPerk(getSelectedIndex())
-        local cantAfford = selectedPerk:cost() > remainingPoints
-        if (not satisfied(selectedPerk)) or hasAlready or cantAfford then
-            color = 'disabled'
-        end
+    end
+    if not perkAvailable(selectedPerk) then
+        color = 'disabled'
     end
     pickButtonElement.layout = myui.createTextButton(
         pickButtonElement,
@@ -308,8 +317,12 @@ local function menuLayout()
         type = ui.TYPE.Container,
         template = interfaces.MWUI.templates.boxTransparentThick,
         props = {
-            anchor = util.vector2(0.5, 0.5),
+            horizontal = true,
+            autoSize = false,
+
             relativePosition = util.vector2(0.5, 0.5),
+            anchor = util.vector2(0.5, 0.5)
+            --relativeSize = util.vector2(1, 1) --* settings.uiScale,
         },
         content = ui.content {
             {
@@ -323,48 +336,35 @@ local function menuLayout()
                         props = {
                             horizontal = true,
                             autoSize = false,
-                            size = util.vector2(600, 480) --* settings.uiScale,
+                            size = util.vector2(600, 480),
                         },
                         content = ui.content {
                             perkList.root,
                             myui.padWidget(8, 0),
                             {
                                 -- detail page section
-                                type = ui.TYPE.Widget,
+                                type = ui.TYPE.Flex,
                                 props = {
                                     arrange = ui.ALIGNMENT.Center,
                                     relativeSize = util.vector2(1, 1),
-                                    --relativePosition = util.vector2(0.5, 0),
                                 },
                                 external = { grow = 1 },
                                 content = ui.content {
                                     perkDetailElement,
-                                    --myui.padWidget(0, 8),
+                                    myui.padWidget(0, 8),
+                                    haveThisPerk,
+                                    myui.padWidget(0, 8),
                                     {
-                                        name = 'footer',
                                         type = ui.TYPE.Flex,
                                         props = {
-                                            align = ui.ALIGNMENT.Center,
-                                            arrange = ui.ALIGNMENT.Center,
-                                            relativePosition = util.vector2(0.5, 1),
-                                            anchor = util.vector2(0.5, 1)
+                                            horizontal = true,
                                         },
                                         content = ui.content {
-                                            haveThisPerk,
-                                            myui.padWidget(0, 8),
-                                            {
-                                                type = ui.TYPE.Flex,
-                                                props = {
-                                                    horizontal = true,
-                                                },
-                                                content = ui.content {
-                                                    pickButtonElement,
-                                                    myui.padWidget(8, 0),
-                                                    cancelButtonElement
-                                                },
-                                            }
-                                        }
-                                    },
+                                            pickButtonElement,
+                                            myui.padWidget(8, 0),
+                                            cancelButtonElement
+                                        },
+                                    }
                                 }
                             }
                         }
@@ -396,6 +396,9 @@ local function showPerkUI(data)
     weightsCache = {}
     satisfiedCache = {}
 
+    remainingPoints = interfaces.ErnPerkFramework.totalAllowedPoints() -
+        interfaces.ErnPerkFramework.currentSpentPoints()
+
     -- Set the filter, if there is one.
     if data.visiblePerks ~= nil then
         if (type(data.visiblePerks) ~= "table") then
@@ -418,30 +421,26 @@ local function showPerkUI(data)
         return
     end
 
-    -- Also quit if no visible perks are available to us.
-    local aPerkIsAvailable = false
-    for _, id in ipairs(allPerkIDs) do
-        local perkObj = interfaces.ErnPerkFramework.getPerks()[id]
-        local hasAlready = perkObj:active()
-        local cantAfford = perkObj:cost() > remainingPoints
-        local met = satisfied(id)
-        if (not hasAlready) and (not cantAfford) and met then
-            aPerkIsAvailable = true
-            break
+    -- Quit if this is the normal window and nothing is available.
+    if visiblePerks == nil then
+        local aPerkIsAvailable = false
+        for _, id in ipairs(allPerkIDs) do
+            if perkAvailable(id) then
+                aPerkIsAvailable = true
+                break
+            end
         end
-    end
-    if not aPerkIsAvailable then
-        log(nil, "No available perks found.")
-        return
+        if not aPerkIsAvailable then
+            log(nil, "No available perks found.")
+            return
+        end
     end
 
     if menu == nil then
         interfaces.UI.setMode('Interface', { windows = {} })
         log(nil, "Showing Perk UI...")
-        remainingPoints = data.remainingPoints
 
         perkList.selectedIndex = 1
-
         menu = ui.create(menuLayout())
         redraw()
     else

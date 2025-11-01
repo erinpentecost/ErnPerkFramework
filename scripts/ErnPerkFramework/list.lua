@@ -35,7 +35,7 @@ function NewList(renderer, props)
     local new = {
         topIndex = 1,
         selectedIndex = 1,
-        displayCount = 14,
+        displayCount = 16,
         totalCount = 1,
         renderer = renderer,
         containerElement = ui.create {
@@ -76,10 +76,12 @@ function NewList(renderer, props)
     -- set root
     new.root = ui.create {
         type = ui.TYPE.Flex,
+        template = interfaces.MWUI.templates.borders,
         props = { horizontal = true },
         content = ui.content {
             {
                 type = ui.TYPE.Widget,
+                template = interfaces.MWUI.templates.borders,
                 props = {
                     size = util.vector2(20, 0),
                     relativeSize = util.vector2(0, 1),
@@ -210,7 +212,7 @@ function ListFunctions.updateScrollbar(self)
         self.thumbElement.layout.props.relativePosition = util.vector2(0, 0)
     else
         local thumbHeight = self.displayCount / self.totalCount
-        local scrollPosition = (1 - thumbHeight) * (self.topIndex - 1) / (self.totalCount - self.displayCount - 1)
+        local scrollPosition = (1 - thumbHeight) * (self.topIndex - 1) / (self.totalCount - self.displayCount)
         self.thumbElement.layout.props.relativeSize = util.vector2(1, thumbHeight)
         self.thumbElement.layout.props.relativePosition = util.vector2(0, scrollPosition)
     end
@@ -232,13 +234,13 @@ function ListFunctions.update(self)
     -- if selectedIndex is outside our window, adjust the window.
     if self.selectedIndex < self.topIndex then
         self.topIndex = self.selectedIndex
-    elseif self.selectedIndex > self.topIndex + self.displayCount then
-        self.topIndex = self:clamp(self.selectedIndex - self.displayCount)
+    elseif self.selectedIndex > self.topIndex + self.displayCount - 1 then
+        self.topIndex = self:clamp(self.selectedIndex - self.displayCount + 1)
     end
 
     -- make element items and insert them.
     -- we can show fewer items if the total count is less than display count
-    for i = self.topIndex, self.topIndex + math.min(self.displayCount, self.totalCount) do
+    for i = self.topIndex, self.topIndex + math.min(self.displayCount, self.totalCount) - 1 do
         local modI = self:clamp(i)
         local entryElement = self.renderer(modI, modI == self.selectedIndex)
         entryElement.layout['external'] = { grow = 1 }
